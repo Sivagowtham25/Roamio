@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:backgroundTint="@color/material_on_primary_emphasis_high_type"
+    android:background="#F4F6F8">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <!-- TITLE -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="START YOUR JOURNEY"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:layout_gravity="center"
+            android:layout_marginBottom="30dp"/>
+
+
+        <!-- EMAIL OR PHONE -->
+        <EditText
+            android:id="@+id/etEmail"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:hint="Email or phone number"
+            android:padding="12dp"
+            android:layout_marginBottom="14dp"/>
+
+
+        <!-- AGE -->
+        <EditText
+            android:id="@+id/etAge"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:hint="Age"
+            android:inputType="number"
+            android:padding="12dp"
+            android:layout_marginBottom="14dp"/>
+
+
+        <!-- JOB TYPE DROPDOWN -->
+        <Spinner
+            android:id="@+id/spJob"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginBottom="18dp"/>
+
+
+        <!-- PREFERENCES LABEL -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Preferences"
+            android:textStyle="bold"
+            android:layout_marginBottom="10dp"/>
+
+
+        <!-- CHECKBOX GRID -->
+        <GridLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:columnCount="4"
+            android:rowCount="2">
+
+            <!-- TOP ROW -->
+
+            <CheckBox
+                android:id="@+id/cbTrekking"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:text="Trekking"
+                android:padding="6dp"/>
+
+            <CheckBox
+                android:id="@+id/cbAdventure"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:text="Adventure"
+                android:padding="6dp"/>
+
+            <CheckBox
+                android:id="@+id/cbBusinessTrip"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:text="Business Trip"
+                android:padding="6dp"/>
+
+            <CheckBox
+                android:id="@+id/cbVacation"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:text="Vacation"
+                android:padding="6dp"/>
+
+
+            <!-- BOTTOM ROW -->
+
+            <CheckBox
+                android:id="@+id/cbDevotional"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:text="Devotional Trip"
+                android:padding="6dp"/>
+
+            <CheckBox
+                android:id="@+id/cbRoadTrip"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:text="Road Trip"
+                android:padding="6dp"/>
+
+            <CheckBox
+                android:id="@+id/cbWeekOff"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:text="Week Off"
+                android:padding="6dp"/>
+
+        </GridLayout>
+
+
+        <!-- PASSWORD -->
+        <EditText
+            android:id="@+id/etPassword"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:hint="Password"
+            android:inputType="textPassword"
+            android:padding="12dp"
+            android:layout_marginTop="18dp"
+            android:layout_marginBottom="26dp"/>
+
+
+        <!-- SIGNUP BUTTON -->
+        <Button
+            android:id="@+id/btnSignup"
+            android:layout_width="220dp"
+            android:layout_height="55dp"
+            android:text="Sign Up"
+            android:layout_gravity="center"
+            android:backgroundTint="#D8DEE6"
+            android:textColor="#000"
+            android:elevation="6dp"/>
+
+    </LinearLayout>
+
+</ScrollView>

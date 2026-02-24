@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Roamio</string>
+    <string-array name="spJob">
+        <item>Business</item>
+        <item>Self-Employed</item>
+        <item>Private</item>
+        <item>IT</item>
+    </string-array>
+</resources>
