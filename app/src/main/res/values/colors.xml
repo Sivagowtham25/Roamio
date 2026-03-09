@@ -2,4 +2,15 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+        <color name="colorDeepNavy">#0A1628</color>
+        <color name="colorTeal">#00C9B1</color>
+        <color name="colorGold">#F4B942</color>
+        <color name="colorGlassCard">#14FFFFFF</color>
+        <color name="colorTextPrimary">#EEF2FF</color>
+        <color name="colorTextMuted">#88AAC0CC</color>
+        <color name="colorDivider">#1AFFFFFF</color>
+        <color name="colorStrengthBlank">#22FFFFFF</color>
+        <color name="colorStrengthWeak">#FFEF4444</color>
+        <color name="colorStrengthMedium">#FFF4B942</color>
+        <color name="colorStrengthStrong">#FF00C9B1</color>
 </resources>

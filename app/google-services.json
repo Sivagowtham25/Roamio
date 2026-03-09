@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "39294055318",
+    "project_id": "roamio-c2337",
+    "storage_bucket": "roamio-c2337.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:39294055318:android:e07bacb8f39768979e23b7",
+        "android_client_info": {
+          "package_name": "com.example.roamio"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC3UNVdufBtcsVYRjO8eklJLnG8Iinrtpg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

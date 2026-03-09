@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Theme for SignupActivity — declare in AndroidManifest for this activity -->
+    <style name="Theme.Roamio.Signup" parent="Theme.MaterialComponents.NoActionBar">
+        <item name="colorPrimary">@color/colorTeal</item>
+        <item name="colorPrimaryVariant">#0097A7</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="android:windowBackground">@color/colorDeepNavy</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    </style>
+
+    <!-- Small uppercase field label above each input -->
+    <style name="FieldLabel">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/colorTextMuted</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:layout_marginBottom">6dp</item>
+    </style>
+
+    <!-- Glass-style Material TextInputLayout (OutlinedBox variant) -->
+    <style name="GlassInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/colorDivider</item>
+        <item name="boxStrokeWidth">1dp</item>
+        <item name="boxStrokeWidthFocused">1.5dp</item>
+        <item name="boxBackgroundColor">#0FFFFFFF</item>
+        <item name="boxCornerRadiusTopStart">12dp</item>
+        <item name="boxCornerRadiusTopEnd">12dp</item>
+        <item name="boxCornerRadiusBottomStart">12dp</item>
+        <item name="boxCornerRadiusBottomEnd">12dp</item>
+        <item name="hintTextColor">@color/colorTextMuted</item>
+        <item name="android:layout_marginBottom">0dp</item>
+        <item name="colorControlActivated">@color/colorTeal</item>
+    </style>
+
+    <!-- Text styling inside glass input fields -->
+    <style name="GlassEditText">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/colorTextPrimary</item>
+        <item name="android:textColorHint">@color/colorTextMuted</item>
+        <item name="android:textSize">14.5sp</item>
+        <item name="android:paddingTop">14dp</item>
+        <item name="android:paddingBottom">14dp</item>
+    </style>
+
+    <!-- Trip type CheckBox chip styling -->
+    <style name="TripChip" parent="Widget.AppCompat.CompoundButton.CheckBox">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">46dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingEnd">8dp</item>
+        <item name="android:textColor">@color/colorTextPrimary</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:button">@null</item>
+        <item name="android:background">@drawable/bg_trip_chip</item>
+    </style>
+
+</resources>

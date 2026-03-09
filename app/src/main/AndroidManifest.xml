@@ -25,8 +25,11 @@
         </activity>
 
         <!-- SIGNUP ACTIVITY -->
-        <activity android:name=".activities.SignupActivity" />
-
+        <activity
+            android:name=".activities.SignupActivity"
+            android:theme="@style/Theme.Roamio.Signup"
+            android:windowSoftInputMode="adjustResize"
+            android:exported="false" />
     </application>
 
 </manifest>
