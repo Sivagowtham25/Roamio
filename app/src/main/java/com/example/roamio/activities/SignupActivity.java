@@ -177,8 +177,14 @@ public class SignupActivity extends AppCompatActivity {
         });
 
         tvLoginRedirect.setOnClickListener(v -> {
-            startActivity(new Intent(this, LoginActivity.class));
-            overridePendingTransition(R.anim.slide_left, R.anim.fade_out);
+            Intent intent = new Intent(SignupActivity.this, LoginActivity.class);
+
+            startActivity(
+                    intent,
+                    android.app.ActivityOptions
+                            .makeCustomAnimation(this, R.anim.slide_left, R.anim.fade_out)
+                            .toBundle()
+            );
         });
     }
 

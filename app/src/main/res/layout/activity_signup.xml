@@ -292,7 +292,10 @@
                     android:textColor="@color/colorGold"
                     android:textSize="14sp"
                     android:textStyle="bold"
-                    android:paddingBottom="4dp"/>
+                    android:paddingBottom="4dp"
+                    android:clickable="true"
+                    android:focusable="true"/>
+
 
             </LinearLayout>
         </androidx.cardview.widget.CardView>
