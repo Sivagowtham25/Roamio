@@ -1,191 +1,138 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    activity_login.xml  —  Roamio Login Screen
-    Matches the deep-navy glass aesthetic of activity_signup.xml exactly.
--->
-<ScrollView
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
-    android:background="@color/colorDeepNavy"
-    android:fitsSystemWindows="false">
+    android:background="@color/colorDeepNavy">
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingTop="72dp"
-        android:paddingBottom="40dp"
-        android:paddingStart="20dp"
-        android:paddingEnd="20dp"
-        android:gravity="center_horizontal">
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:scrollbars="none"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
 
-        <!-- ── Logo Row ─────────────────────────────────────────────────── -->
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="36dp">
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <View android:layout_width="match_parent" android:layout_height="72dp"/>
 
             <TextView
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:text="🧭"
-                android:textSize="26sp"
-                android:gravity="center"
-                android:background="@drawable/bg_logo_circle"
-                android:layout_marginEnd="12dp"/>
-
-            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:text="ROAMIO"
+                android:textColor="@color/colorTeal"
+                android:textSize="13sp"
+                android:letterSpacing="0.18"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp"/>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/app_name"
-                    android:textColor="@color/colorTextPrimary"
-                    android:textSize="20sp"
-                    android:textStyle="bold"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Welcome back"
+                android:textColor="@color/white"
+                android:textSize="30sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="6dp"/>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="AI-POWERED TOURISM"
-                    android:textColor="@color/colorTextMuted"
-                    android:textSize="10sp"
-                    android:letterSpacing="0.1"/>
-            </LinearLayout>
-        </LinearLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sign in to continue your journey"
+                android:textColor="@color/colorTextMuted"
+                android:textSize="15sp"
+                android:layout_marginBottom="36dp"/>
 
-        <!-- ── Heading ──────────────────────────────────────────────────── -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Welcome Back,\nTraveller"
-            android:textColor="@color/colorTextPrimary"
-            android:textSize="30sp"
-            android:textStyle="bold"
-            android:lineSpacingMultiplier="1.1"
-            android:layout_marginBottom="6dp"/>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Sign in to continue your journey with Roamio."
-            android:textColor="@color/colorTextMuted"
-            android:textSize="14sp"
-            android:layout_marginBottom="28dp"/>
-
-        <!-- ── Glass Card ────────────────────────────────────────────────── -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardLoginForm"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="20dp"
-            app:cardBackgroundColor="@color/colorGlassCard">
-
-            <LinearLayout
+            <!-- ✅ cardLogin ID is here — this is what LoginActivity.java looks for -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardLogin"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="22dp">
+                app:cardBackgroundColor="@color/colorGlassCard"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="0dp">
 
-                <!-- ── Email ─────────────────────────────────────────────── -->
-                <TextView style="@style/FieldLabel" android:text="EMAIL ADDRESS"/>
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/tilLoginEmail"
-                    style="@style/GlassInputLayout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="18dp">
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etLoginEmail"
-                        style="@style/GlassEditText"
-                        android:hint="you@email.com"
-                        android:inputType="textEmailAddress"
-                        android:imeOptions="actionNext"/>
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <!-- ── Password ──────────────────────────────────────────── -->
-                <TextView style="@style/FieldLabel" android:text="PASSWORD"/>
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/tilLoginPassword"
-                    style="@style/GlassInputLayout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:endIconMode="password_toggle"
-                    app:endIconTint="@color/colorTextMuted">
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etLoginPassword"
-                        style="@style/GlassEditText"
-                        android:hint="Your password"
-                        android:inputType="textPassword"
-                        android:imeOptions="actionDone"/>
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <!-- ── Forgot Password ───────────────────────────────────── -->
-                <TextView
-                    android:id="@+id/tvForgotPassword"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="end"
-                    android:text="Forgot password?"
-                    android:textColor="@color/colorGold"
-                    android:textSize="13sp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="26dp"
-                    android:paddingBottom="2dp"/>
-
-                <!-- ── Sign In Button ─────────────────────────────────────── -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnLogin"
-                    android:layout_width="match_parent"
-                    android:layout_height="54dp"
-                    android:text="Sign In"
-                    android:textSize="15sp"
-                    android:textColor="@color/white"
-                    android:textStyle="bold"
-                    app:backgroundTint="@color/colorTeal"
-                    app:cornerRadius="14dp"
-                    app:elevation="10dp"/>
-
-                <!-- ── Divider ────────────────────────────────────────────── -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginTop="22dp"
-                    android:layout_marginBottom="14dp">
-                    <View android:layout_width="0dp" android:layout_height="1dp"
-                        android:layout_weight="1" android:background="@color/colorDivider"/>
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="  New to Roamio?  "
-                        android:textColor="@color/colorTextMuted" android:textSize="12sp"/>
-                    <View android:layout_width="0dp" android:layout_height="1dp"
-                        android:layout_weight="1" android:background="@color/colorDivider"/>
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView style="@style/FieldLabel" android:text="Email Address"/>
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        style="@style/GlassInputLayout">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etEmail"
+                            style="@style/GlassEditText"
+                            android:hint="john@example.com"
+                            android:inputType="textEmailAddress"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <TextView
+                        style="@style/FieldLabel"
+                        android:text="Password"
+                        android:layout_marginTop="18dp"/>
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilPassword"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        style="@style/GlassInputLayout"
+                        app:passwordToggleEnabled="true"
+                        app:passwordToggleTint="@color/colorTextMuted">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etPassword"
+                            style="@style/GlassEditText"
+                            android:hint="••••••••"
+                            android:inputType="textPassword"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <TextView
+                        android:id="@+id/tvForgotPassword"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end"
+                        android:text="Forgot password?"
+                        android:textColor="@color/colorTeal"
+                        android:textSize="12sp"
+                        android:layout_marginTop="10dp"
+                        android:padding="4dp"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnLogin"
+                        android:layout_width="match_parent"
+                        android:layout_height="60dp"
+                        android:text="Sign In"
+                        android:textColor="@color/colorDeepNavy"
+                        android:backgroundTint="@color/colorTeal"
+                        android:layout_marginTop="20dp"
+                        app:cornerRadius="16dp"
+                        android:textStyle="bold"
+                        android:textSize="15sp"/>
+
                 </LinearLayout>
+            </androidx.cardview.widget.CardView>
 
-                <!-- ── Signup Redirect ────────────────────────────────────── -->
-                <TextView
-                    android:id="@+id/tvSignupRedirect"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="Create a travel profile →"
-                    android:textColor="@color/colorGold"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    android:paddingBottom="4dp"/>
+            <TextView
+                android:id="@+id/tvSignupRedirect"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="New to Roamio? Create an account"
+                android:textColor="@color/colorTeal"
+                android:layout_gravity="center"
+                android:layout_marginTop="24dp"
+                android:padding="12dp"/>
 
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
+            <View android:layout_width="match_parent" android:layout_height="40dp"/>
 
-    </LinearLayout>
-</ScrollView>
+        </LinearLayout>
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

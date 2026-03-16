@@ -61,5 +61,4 @@
         <item name="android:button">@null</item>
         <item name="android:background">@drawable/bg_trip_chip</item>
     </style>
-
 </resources>
