@@ -61,4 +61,16 @@
         <item name="android:button">@null</item>
         <item name="android:background">@drawable/bg_trip_chip</item>
     </style>
+
+    <!-- Theme for MainActivity Home Screen -->
+    <style name="Theme.Roamio.Home" parent="Theme.MaterialComponents.NoActionBar">
+        <item name="colorPrimary">@color/colorTeal</item>
+        <item name="colorPrimaryVariant">#0097A7</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="android:windowBackground">#000000</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">#000000</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    </style>
+
 </resources>

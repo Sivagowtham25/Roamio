@@ -155,8 +155,11 @@ public class MainActivity extends AppCompatActivity {
         View navReview  = findViewById(R.id.navReview);
         View navAccount = findViewById(R.id.navAccount);
 
-        navNearby.setOnClickListener(v ->
-                Toast.makeText(this, "Nearby — coming soon!", Toast.LENGTH_SHORT).show());
+        navNearby.setOnClickListener(v -> {
+            Intent nearbyIntent = new Intent(this, com.example.roamio.activities.NearbyActivity.class);
+            startActivity(nearbyIntent);
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+        });
         navTrips.setOnClickListener(v ->
                 Toast.makeText(this, "Trips — coming soon!", Toast.LENGTH_SHORT).show());
         navReview.setOnClickListener(v ->
