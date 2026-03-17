@@ -165,7 +165,7 @@ public class MainActivity extends AppCompatActivity {
         navReview.setOnClickListener(v ->
                 Toast.makeText(this, "Reviews — coming soon!", Toast.LENGTH_SHORT).show());
         navAccount.setOnClickListener(v ->
-                Toast.makeText(this, "Account — coming soon!", Toast.LENGTH_SHORT).show());
+                startActivity(new Intent(this, com.example.roamio.activities.ProfileActivity.class)));
     }
 
     // ── dp helper ─────────────────────────────────────────────────────────────
