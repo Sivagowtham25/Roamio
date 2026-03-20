@@ -100,6 +100,7 @@ public class NearbyActivity extends AppCompatActivity implements OnMapReadyCallb
 
     // ── Data ──────────────────────────────────────────────────────────────────
     private NearbyPlaceAdapter adapter;
+    private boolean isDestinationMode = false;
     private final List<NearbyPlace> placeList = new ArrayList<>();
     private String selectedCategory = "restaurant"; // default
 
@@ -115,6 +116,14 @@ public class NearbyActivity extends AppCompatActivity implements OnMapReadyCallb
         setContentView(R.layout.activity_nearby);
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        // Check if a destination was passed from a card click
+        String destination = getIntent().getStringExtra("destination");
+        double destLat = getIntent().getDoubleExtra("dest_lat", 0);
+        double destLng = getIntent().getDoubleExtra("dest_lng", 0);
+        if (destination != null && destLat != 0 && destLng != 0) {
+            userLocation = new LatLng(destLat, destLng);
+            isDestinationMode = true;
+        }
 
         bindViews();
         setupRecyclerView();
@@ -245,7 +254,12 @@ public class NearbyActivity extends AppCompatActivity implements OnMapReadyCallb
         });
 
         // Now get location
-        requestLocation();
+        // If a destination was passed, skip GPS and go straight there
+        if (isDestinationMode && userLocation != null) {
+            onLocationObtained();
+        } else {
+            requestLocation();
+        }
     }
 
     // ── Location ──────────────────────────────────────────────────────────────

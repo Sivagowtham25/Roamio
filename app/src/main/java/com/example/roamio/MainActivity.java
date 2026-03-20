@@ -89,7 +89,35 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(this, com.example.roamio.activities.NearbyActivity.class));
             overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         });
-        
+
+        // Wire destination cards
+        findViewById(R.id.cardDestChennai).setOnClickListener(v -> {
+            Intent i = new Intent(this, com.example.roamio.activities.NearbyActivity.class);
+            i.putExtra("destination", "Chennai");
+            i.putExtra("dest_lat", 13.0827);
+            i.putExtra("dest_lng", 80.2707);
+            startActivity(i);
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+        });
+
+        findViewById(R.id.cardDestAlternatives).setOnClickListener(v -> {
+            Intent i = new Intent(this, com.example.roamio.activities.NearbyActivity.class);
+            i.putExtra("destination", "Mahabalipuram");
+            i.putExtra("dest_lat", 12.6269);
+            i.putExtra("dest_lng", 80.1927);
+            startActivity(i);
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+        });
+
+        findViewById(R.id.cardDestPondicherry).setOnClickListener(v -> {
+            Intent i = new Intent(this, com.example.roamio.activities.NearbyActivity.class);
+            i.putExtra("destination", "Pondicherry");
+            i.putExtra("dest_lat", 11.9416);
+            i.putExtra("dest_lng", 79.8083);
+            startActivity(i);
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+        });
+
         // Bottom nav click listeners
         setupBottomNav();
     }
