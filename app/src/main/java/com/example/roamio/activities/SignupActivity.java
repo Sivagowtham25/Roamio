@@ -30,6 +30,7 @@ import com.google.android.material.textfield.TextInputLayout;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import com.example.roamio.utils.SessionManager;
 
 public class SignupActivity extends AppCompatActivity {
 
@@ -50,6 +51,7 @@ public class SignupActivity extends AppCompatActivity {
 
     // ── Firebase ──────────────────────────────────────────────────────────────
     private FirebaseAuthManager authManager;
+    private SessionManager sessionManager;
 
     // ── Data ──────────────────────────────────────────────────────────────────
     private static final String[] JOB_OPTIONS = {
@@ -76,6 +78,7 @@ public class SignupActivity extends AppCompatActivity {
         setContentView(R.layout.activity_signup);
 
         authManager = new FirebaseAuthManager();
+        sessionManager = new SessionManager(this);
 
         bindViews();
         setupJobSpinner();
@@ -224,9 +227,11 @@ public class SignupActivity extends AppCompatActivity {
         authManager.signUp(email, pwd, user, new FirebaseAuthManager.AuthCallback() {
             @Override
             public void onSuccess(String uid) {
+                sessionManager.saveSession(uid, name);   // ← saves 30-day session
                 showToast("Welcome, " + name + "! 🌍");
                 Intent intent = new Intent(SignupActivity.this, MainActivity.class);
                 intent.putExtra("uid", uid);
+                intent.putExtra("user_name", name);      // ← so greeting shows name
                 intent.putStringArrayListExtra("recommendations", new ArrayList<>(recommendations));
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(intent);

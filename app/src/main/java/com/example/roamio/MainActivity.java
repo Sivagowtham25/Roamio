@@ -83,6 +83,13 @@ public class MainActivity extends AppCompatActivity {
             loadRecommendationsFromFirestore();
         }
 
+        // Wire Explore Nearby card
+        View cardExploreNearby = findViewById(R.id.cardExploreNearby);
+        cardExploreNearby.setOnClickListener(v -> {
+            startActivity(new Intent(this, com.example.roamio.activities.NearbyActivity.class));
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+        });
+        
         // Bottom nav click listeners
         setupBottomNav();
     }
@@ -99,8 +106,10 @@ public class MainActivity extends AppCompatActivity {
 
     // ── Update greeting subtitle (optional future use) ─────────────────────────
     private void setupGreeting(String name) {
-        // The "Where to?" header is static; we can later personalise it
-        // e.g. "Where to, " + name + "?" — left as a future enhancement.
+        TextView tvWhereTo = findViewById(R.id.tvWhereTo);
+        if (name != null && !name.isEmpty() && !name.equals("Traveller")) {
+            tvWhereTo.setText("Where to,\n" + name + "?");
+        }
     }
 
     // ── Populate recommendation chips dynamically ──────────────────────────────
