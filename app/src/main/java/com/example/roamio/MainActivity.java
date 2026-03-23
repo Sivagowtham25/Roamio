@@ -198,7 +198,7 @@ public class MainActivity extends AppCompatActivity {
             overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         });
         navTrips.setOnClickListener(v -> {
-            startActivity(new Intent(this, com.example.roamio.activities.TripActivity.class));
+            startActivity(new Intent(this, com.example.roamio.activities.MyTripsActivity.class));
             overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         });
         navReview.setOnClickListener(v ->

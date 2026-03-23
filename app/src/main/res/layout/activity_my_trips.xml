@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorDeepNavy"
+    android:fitsSystemWindows="false">
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingBottom="80dp"
+        android:clipToPadding="false"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingTop="56dp"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp">
+
+            <!-- ── Header ─────────────────────────────────────────────── -->
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="28dp">
+
+                <ImageView
+                    android:id="@+id/btnBack"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/ic_chevron_right"
+                    android:rotation="180"
+                    android:padding="8dp"
+                    android:background="@drawable/bg_explore_card"
+                    android:clickable="true"
+                    android:focusable="true"/>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:orientation="vertical"
+                    android:gravity="center">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="My Trips"
+                        android:textColor="@color/colorTextPrimary"
+                        android:textSize="20sp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="YOUR SAVED JOURNEYS"
+                        android:textColor="@color/colorTextMuted"
+                        android:textSize="10sp"
+                        android:letterSpacing="0.1"/>
+                </LinearLayout>
+
+            </RelativeLayout>
+
+            <!-- ── Loading ────────────────────────────────────────────── -->
+            <ProgressBar
+                android:id="@+id/progressBar"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="60dp"
+                android:layout_marginBottom="20dp"
+                android:indeterminateTint="@color/colorTeal"
+                android:visibility="visible"/>
+
+            <!-- ── Empty state ─────────────────────────────────────────── -->
+            <TextView
+                android:id="@+id/tvEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="No trips saved yet.\nTap + to plan your first trip!"
+                android:textColor="@color/colorTextMuted"
+                android:textSize="15sp"
+                android:gravity="center"
+                android:layout_marginTop="60dp"
+                android:lineSpacingMultiplier="1.5"
+                android:visibility="gone"/>
+
+            <!-- ── Trip cards added dynamically ───────────────────────── -->
+            <LinearLayout
+                android:id="@+id/llTrips"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"/>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- ── FAB — Add new trip ──────────────────────────────────────────── -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnAddTrip"
+        android:layout_width="wrap_content"
+        android:layout_height="56dp"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="20dp"
+        android:text="+ New Trip"
+        android:textColor="@color/colorDeepNavy"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        app:backgroundTint="@color/colorTeal"
+        app:cornerRadius="28dp"
+        app:elevation="12dp"/>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

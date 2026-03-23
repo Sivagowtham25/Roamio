@@ -430,7 +430,8 @@ public class TripActivity extends AppCompatActivity {
         private static List<String> getDayActivities(String dest, int day,
                                                      int totalDays, String notes) {
             List<String> acts = new ArrayList<>();
-            boolean isVeg      = notes.toLowerCase().contains("veg");
+            boolean isVeg      = notes.toLowerCase().contains("vegetarian")
+                    && !notes.toLowerCase().contains("non-veg");
             boolean wantsBeach = notes.toLowerCase().contains("beach");
 
             if (day == 1) {
@@ -744,7 +745,8 @@ public class TripActivity extends AppCompatActivity {
             { tips.add("📱  Download offline maps before you travel");
                 tips.add("🎫  Book popular attractions online to skip queues"); }
 
-            if (notes.toLowerCase().contains("veg"))
+            if (notes.toLowerCase().contains("vegetarian")
+                    && !notes.toLowerCase().contains("non-veg"))
                 tips.add("🥗  Look for 'Pure Veg' restaurants — widely available in South India");
             if (notes.toLowerCase().contains("family"))
                 tips.add("👨‍👩‍👧  Book ground floor or accessible rooms for elderly family members");
