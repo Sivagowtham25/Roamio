@@ -1,0 +1,395 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/scrollView"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@color/colorDeepNavy"
+    android:fitsSystemWindows="false"
+    android:scrollbars="none">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingTop="56dp"
+        android:paddingBottom="40dp"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp">
+
+        <!-- ── Header row ────────────────────────────────────────────────── -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="28dp">
+
+            <ImageView
+                android:id="@+id/btnBack"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:src="@drawable/ic_chevron_right"
+                android:rotation="180"
+                android:padding="8dp"
+                android:background="@drawable/bg_explore_card"
+                android:clickable="true"
+                android:focusable="true"/>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Plan a Trip"
+                    android:textColor="@color/colorTextPrimary"
+                    android:textSize="20sp"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="AI-POWERED TOURISM"
+                    android:textColor="@color/colorTextMuted"
+                    android:textSize="10sp"
+                    android:letterSpacing="0.1"/>
+            </LinearLayout>
+
+        </RelativeLayout>
+
+        <!-- ── Create Trip Card ──────────────────────────────────────────── -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardCreate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="20dp"
+            app:cardBackgroundColor="@color/colorGlassCard">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="22dp">
+
+                <!-- Section title -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="✈️"
+                        android:textSize="20sp"
+                        android:layout_marginEnd="10dp"/>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Create a Trip"
+                            android:textColor="@color/colorTextPrimary"
+                            android:textSize="17sp"
+                            android:textStyle="bold"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Fill in the details below"
+                            android:textColor="@color/colorTextMuted"
+                            android:textSize="12sp"/>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Destination -->
+                <TextView style="@style/FieldLabel" android:text="DESTINATION"/>
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilDestination"
+                    style="@style/GlassInputLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etDestination"
+                        style="@style/GlassEditText"
+                        android:hint="e.g. Goa, Kerala, Rajasthan"
+                        android:inputType="textCapWords"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Trip Name -->
+                <TextView style="@style/FieldLabel" android:text="TRIP NAME"/>
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilTripName"
+                    style="@style/GlassInputLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etTripName"
+                        style="@style/GlassEditText"
+                        android:hint="e.g. Summer Vacation 2025"
+                        android:inputType="textCapWords"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Start + End Date row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="2"
+                    android:layout_marginBottom="16dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:layout_marginEnd="8dp">
+                        <TextView style="@style/FieldLabel" android:text="START DATE"/>
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/tilStartDate"
+                            style="@style/GlassInputLayout"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            app:endIconMode="custom"
+                            app:endIconDrawable="@drawable/ic_location"
+                            app:endIconTint="@color/colorTextMuted">
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/etStartDate"
+                                style="@style/GlassEditText"
+                                android:hint="DD/MM/YYYY"
+                                android:focusable="false"
+                                android:clickable="true"/>
+                        </com.google.android.material.textfield.TextInputLayout>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:layout_marginStart="8dp">
+                        <TextView style="@style/FieldLabel" android:text="END DATE"/>
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/tilEndDate"
+                            style="@style/GlassInputLayout"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            app:endIconMode="custom"
+                            app:endIconDrawable="@drawable/ic_location"
+                            app:endIconTint="@color/colorTextMuted">
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/etEndDate"
+                                style="@style/GlassEditText"
+                                android:hint="DD/MM/YYYY"
+                                android:focusable="false"
+                                android:clickable="true"/>
+                        </com.google.android.material.textfield.TextInputLayout>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Travellers + Budget row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="2"
+                    android:layout_marginBottom="16dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:layout_marginEnd="8dp">
+                        <TextView style="@style/FieldLabel" android:text="TRAVELLERS"/>
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/tilTravellers"
+                            style="@style/GlassInputLayout"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content">
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/etTravellers"
+                                style="@style/GlassEditText"
+                                android:hint="e.g. 2"
+                                android:inputType="number"/>
+                        </com.google.android.material.textfield.TextInputLayout>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:layout_marginStart="8dp">
+                        <TextView style="@style/FieldLabel" android:text="BUDGET (₹)"/>
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/tilBudget"
+                            style="@style/GlassInputLayout"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content">
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/etBudget"
+                                style="@style/GlassEditText"
+                                android:hint="e.g. 25000"
+                                android:inputType="numberDecimal"/>
+                        </com.google.android.material.textfield.TextInputLayout>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Notes / Activities -->
+                <TextView style="@style/FieldLabel" android:text="NOTES / ACTIVITIES"/>
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilNotes"
+                    style="@style/GlassInputLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="22dp">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etNotes"
+                        style="@style/GlassEditText"
+                        android:hint="e.g. Prefer vegetarian food, want beach activities..."
+                        android:inputType="textMultiLine"
+                        android:minLines="3"
+                        android:gravity="top"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Create Trip Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCreateTrip"
+                    android:layout_width="match_parent"
+                    android:layout_height="54dp"
+                    android:text="Create Trip"
+                    android:textSize="15sp"
+                    android:textColor="@color/white"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/colorTeal"
+                    app:cornerRadius="14dp"
+                    app:elevation="10dp"/>
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- ── Plan with AI Card ─────────────────────────────────────────── -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardAI"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="20dp"
+            app:cardBackgroundColor="@color/colorGlassCard">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="22dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="✦"
+                        android:textColor="@color/colorGold"
+                        android:textSize="18sp"
+                        android:layout_marginEnd="10dp"/>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Plan with AI"
+                            android:textColor="@color/colorTextPrimary"
+                            android:textSize="17sp"
+                            android:textStyle="bold"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Generates a day-by-day itinerary based on your trip details"
+                            android:textColor="@color/colorTextMuted"
+                            android:textSize="12sp"
+                            android:layout_marginTop="2dp"/>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnPlanWithAI"
+                    android:layout_width="match_parent"
+                    android:layout_height="54dp"
+                    android:text="✦  Generate AI Itinerary"
+                    android:textSize="15sp"
+                    android:textColor="@color/colorDeepNavy"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/colorGold"
+                    app:cornerRadius="14dp"
+                    app:elevation="10dp"/>
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- ── AI Result Card (hidden until generated) ───────────────────── -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardAIResult"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="20dp"
+            app:cardBackgroundColor="@color/colorGlassCard">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="22dp">
+
+                <TextView
+                    android:id="@+id/tvAITitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/colorGold"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.04"
+                    android:layout_marginBottom="16dp"/>
+
+                <LinearLayout
+                    android:id="@+id/llAIResult"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"/>
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+    </LinearLayout>
+</ScrollView>

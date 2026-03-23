@@ -197,8 +197,10 @@ public class MainActivity extends AppCompatActivity {
             startActivity(nearbyIntent);
             overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         });
-        navTrips.setOnClickListener(v ->
-                Toast.makeText(this, "Trips — coming soon!", Toast.LENGTH_SHORT).show());
+        navTrips.setOnClickListener(v -> {
+            startActivity(new Intent(this, com.example.roamio.activities.TripActivity.class));
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+        });
         navReview.setOnClickListener(v ->
                 Toast.makeText(this, "Reviews — coming soon!", Toast.LENGTH_SHORT).show());
         navAccount.setOnClickListener(v ->
