@@ -31,6 +31,8 @@ android {
             "MAPS_API_KEY",
             "\"${localProperties.getProperty("MAPS_API_KEY", "")}\""
         )
+        buildConfigField("String", "GEMINI_API_KEY",
+            "\"${localProperties.getProperty("GEMINI_API_KEY", "")}\"")
 
         // ✅ Injects key into AndroidManifest.xml as ${mapsApiKey}
         manifestPlaceholders["mapsApiKey"] =

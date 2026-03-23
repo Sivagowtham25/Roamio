@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <!-- "My trips" heading -->
+    <TextView
+        android:id="@+id/tvMyTrips"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="My trips"
+        android:textColor="#FFFFFF"
+        android:textSize="34sp"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif-black"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="56dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <!-- Central card — Plan your way -->
+    <LinearLayout
+        android:id="@+id/cardPlanTrip"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="@drawable/bg_trips_card"
+        android:padding="32dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        app:layout_constraintTop_toBottomOf="@id/tvMyTrips"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="40dp">
+
+        <!-- Emoji icons cluster -->
+        <FrameLayout
+            android:layout_width="100dp"
+            android:layout_height="80dp"
+            android:layout_marginBottom="24dp">
+
+            <!-- Globe emoji -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🌐"
+                android:textSize="38sp"
+                android:layout_gravity="bottom|start"/>
+
+            <!-- Plane emoji -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="✈️"
+                android:textSize="32sp"
+                android:layout_gravity="bottom|end"/>
+
+            <!-- Heart emoji (top-center) -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="❤️"
+                android:textSize="26sp"
+                android:layout_gravity="top|center_horizontal"/>
+
+        </FrameLayout>
+
+        <!-- Title -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Plan your way with Trips..."
+            android:textColor="#FFFFFF"
+            android:textSize="19sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="14dp"/>
+
+        <!-- Subtitle -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Build a trip with your saves or use AI to get custom recommendations, collaborate with friends, and organise your trip ideas."
+            android:textColor="#AAAAAA"
+            android:textSize="14sp"
+            android:gravity="center"
+            android:lineSpacingMultiplier="1.4"
+            android:layout_marginBottom="30dp"/>
+
+        <!-- Create a trip button (white) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCreateTrip"
+            android:layout_width="match_parent"
+            android:layout_height="58dp"
+            android:text="Create a trip"
+            android:textColor="#111111"
+            android:backgroundTint="#FFFFFF"
+            android:textSize="15sp"
+            android:layout_marginBottom="14dp"
+            app:cornerRadius="50dp"/>
+
+        <!-- Plan with AI button (dark green with white border) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnPlanWithAi"
+            android:layout_width="match_parent"
+            android:layout_height="58dp"
+            android:textSize="15sp"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#1A3A1A"
+            app:cornerRadius="50dp"
+            app:strokeColor="#FFFFFF"
+            app:strokeWidth="1.5dp"
+            app:icon="@drawable/ic_sparkle"
+            app:iconTint="#FFFFFF"
+            app:iconPadding="8dp"
+            android:text="Plan with AI"/>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
