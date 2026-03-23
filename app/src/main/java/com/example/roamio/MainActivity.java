@@ -83,41 +83,6 @@ public class MainActivity extends AppCompatActivity {
             loadRecommendationsFromFirestore();
         }
 
-        // Wire Explore Nearby card
-        View cardExploreNearby = findViewById(R.id.cardExploreNearby);
-        cardExploreNearby.setOnClickListener(v -> {
-            startActivity(new Intent(this, com.example.roamio.activities.NearbyActivity.class));
-            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-        });
-
-        // Wire destination cards
-        findViewById(R.id.cardDestChennai).setOnClickListener(v -> {
-            Intent i = new Intent(this, com.example.roamio.activities.NearbyActivity.class);
-            i.putExtra("destination", "Chennai");
-            i.putExtra("dest_lat", 13.0827);
-            i.putExtra("dest_lng", 80.2707);
-            startActivity(i);
-            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-        });
-
-        findViewById(R.id.cardDestAlternatives).setOnClickListener(v -> {
-            Intent i = new Intent(this, com.example.roamio.activities.NearbyActivity.class);
-            i.putExtra("destination", "Mahabalipuram");
-            i.putExtra("dest_lat", 12.6269);
-            i.putExtra("dest_lng", 80.1927);
-            startActivity(i);
-            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-        });
-
-        findViewById(R.id.cardDestPondicherry).setOnClickListener(v -> {
-            Intent i = new Intent(this, com.example.roamio.activities.NearbyActivity.class);
-            i.putExtra("destination", "Pondicherry");
-            i.putExtra("dest_lat", 11.9416);
-            i.putExtra("dest_lng", 79.8083);
-            startActivity(i);
-            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-        });
-
         // Bottom nav click listeners
         setupBottomNav();
     }
@@ -134,10 +99,8 @@ public class MainActivity extends AppCompatActivity {
 
     // ── Update greeting subtitle (optional future use) ─────────────────────────
     private void setupGreeting(String name) {
-        TextView tvWhereTo = findViewById(R.id.tvWhereTo);
-        if (name != null && !name.isEmpty() && !name.equals("Traveller")) {
-            tvWhereTo.setText("Where to,\n" + name + "?");
-        }
+        // The "Where to?" header is static; we can later personalise it
+        // e.g. "Where to, " + name + "?" — left as a future enhancement.
     }
 
     // ── Populate recommendation chips dynamically ──────────────────────────────
@@ -177,7 +140,6 @@ public class MainActivity extends AppCompatActivity {
                     runOnUiThread(() -> populateRecommendations(user.getAiRecommendations()));
                 }
             }
-
             @Override
             public void onFailure(String errorMessage) {
                 // Silent fail — recommendations section stays empty
@@ -193,19 +155,19 @@ public class MainActivity extends AppCompatActivity {
         View navAccount = findViewById(R.id.navAccount);
 
         navNearby.setOnClickListener(v -> {
-            Intent nearbyIntent = new Intent(this, com.example.roamio.activities.NearbyActivity.class);
-            startActivity(nearbyIntent);
+            startActivity(new Intent(this, com.example.roamio.activities.NearbyActivity.class));
             overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         });
-        navTrips.setOnClickListener(v ->
-                Toast.makeText(this, "Trips — coming soon!", Toast.LENGTH_SHORT).show());
-        navReview.setOnClickListener(v ->
-                Toast.makeText(this, "Reviews — coming soon!", Toast.LENGTH_SHORT).show());
-        navAccount.setOnClickListener(v ->
-                startActivity(new Intent(this, com.example.roamio.activities.ProfileActivity.class)));
+        navTrips.setOnClickListener(v -> {
+            startActivity(new Intent(this, com.example.roamio.activities.TripsActivity.class));
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+        });
+        navAccount.setOnClickListener(v -> {
+            startActivity(new Intent(this, com.example.roamio.activities.ProfileActivity.class));
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+        });
     }
 
-    // ── dp helper ─────────────────────────────────────────────────────────────
     private int dp(int value) {
         float density = getResources().getDisplayMetrics().density;
         return Math.round(value * density);

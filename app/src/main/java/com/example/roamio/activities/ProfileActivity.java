@@ -33,6 +33,7 @@ public class ProfileActivity extends AppCompatActivity {
 
     // ── Firebase ──────────────────────────────────────────────────────────────
     private FirebaseAuthManager authManager;
+    private com.example.roamio.utils.SessionManager sessionManager;
 
     // ─────────────────────────────────────────────────────────────────────────
     @Override
@@ -44,7 +45,8 @@ public class ProfileActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_profile);
 
-        authManager = new FirebaseAuthManager();
+        authManager    = new FirebaseAuthManager();
+        sessionManager = new com.example.roamio.utils.SessionManager(this);
 
         bindViews();
         loadUserProfile();
@@ -173,10 +175,7 @@ public class ProfileActivity extends AppCompatActivity {
 
     // ── Click Listeners ───────────────────────────────────────────────────────
     private void setupClickListeners() {
-        btnLogout.setOnClickListener(v -> {
-            authManager.signOut();
-            navigateToLogin();
-        });
+        btnLogout.setOnClickListener(v -> navigateToLogin());
     }
 
     // ── Loading ───────────────────────────────────────────────────────────────
@@ -208,6 +207,8 @@ public class ProfileActivity extends AppCompatActivity {
 
     // ── Navigation ────────────────────────────────────────────────────────────
     private void navigateToLogin() {
+        sessionManager.clearSession();   // ✅ clear 30-day session on logout
+        authManager.signOut();           // ✅ ensure Firebase is also signed out
         Intent intent = new Intent(this, LoginActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);

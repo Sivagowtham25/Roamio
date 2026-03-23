@@ -34,7 +34,7 @@
                     android:layout_height="wrap_content"
                     android:layout_alignParentStart="true"
                     android:layout_centerVertical="true"
-                    android:text="Where to?"
+                    android:text="Where to go?"
                     android:textColor="#FFFFFF"
                     android:textSize="34sp"
                     android:textStyle="bold"
