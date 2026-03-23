@@ -19,7 +19,7 @@
         android:paddingStart="20dp"
         android:paddingEnd="20dp">
 
-        <!-- ── Header row ────────────────────────────────────────────────── -->
+        <!-- ── Header ───────────────────────────────────────────────────── -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -44,7 +44,6 @@
                 android:layout_centerInParent="true"
                 android:orientation="vertical"
                 android:gravity="center">
-
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -52,7 +51,6 @@
                     android:textColor="@color/colorTextPrimary"
                     android:textSize="20sp"
                     android:textStyle="bold"/>
-
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -61,10 +59,9 @@
                     android:textSize="10sp"
                     android:letterSpacing="0.1"/>
             </LinearLayout>
-
         </RelativeLayout>
 
-        <!-- ── Create Trip Card ──────────────────────────────────────────── -->
+        <!-- ── Create Trip Card ─────────────────────────────────────────── -->
         <androidx.cardview.widget.CardView
             android:id="@+id/cardCreate"
             android:layout_width="match_parent"
@@ -80,26 +77,23 @@
                 android:orientation="vertical"
                 android:padding="22dp">
 
-                <!-- Section title -->
+                <!-- Title -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
                     android:layout_marginBottom="20dp">
-
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="✈️"
                         android:textSize="20sp"
                         android:layout_marginEnd="10dp"/>
-
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="vertical">
-
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -107,7 +101,6 @@
                             android:textColor="@color/colorTextPrimary"
                             android:textSize="17sp"
                             android:textStyle="bold"/>
-
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -117,19 +110,23 @@
                     </LinearLayout>
                 </LinearLayout>
 
-                <!-- Destination -->
+                <!-- Destination — tap to pick from dropdown -->
                 <TextView style="@style/FieldLabel" android:text="DESTINATION"/>
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/tilDestination"
                     style="@style/GlassInputLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp">
+                    android:layout_marginBottom="16dp"
+                    app:endIconMode="custom"
+                    app:endIconDrawable="@drawable/ic_chevron_right"
+                    app:endIconTint="@color/colorTextMuted">
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etDestination"
                         style="@style/GlassEditText"
-                        android:hint="e.g. Goa, Kerala, Rajasthan"
-                        android:inputType="textCapWords"/>
+                        android:hint="Tap to choose destination"
+                        android:focusable="false"
+                        android:clickable="true"/>
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- Trip Name -->
@@ -147,7 +144,7 @@
                         android:inputType="textCapWords"/>
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <!-- Start + End Date row -->
+                <!-- Start + End Date -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -204,7 +201,7 @@
                     </LinearLayout>
                 </LinearLayout>
 
-                <!-- Travellers + Budget row -->
+                <!-- Travellers + Budget -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -253,7 +250,18 @@
                     </LinearLayout>
                 </LinearLayout>
 
-                <!-- Notes / Activities -->
+                <!-- Keyword chips for preferences -->
+                <TextView style="@style/FieldLabel" android:text="PREFERENCES (TAP TO SELECT)"
+                    android:layout_marginBottom="10dp"/>
+
+                <LinearLayout
+                    android:id="@+id/llKeywords"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginBottom="16dp"/>
+
+                <!-- Notes — auto-filled by chips, editable too -->
                 <TextView style="@style/FieldLabel" android:text="NOTES / ACTIVITIES"/>
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/tilNotes"
@@ -264,9 +272,9 @@
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etNotes"
                         style="@style/GlassEditText"
-                        android:hint="e.g. Prefer vegetarian food, want beach activities..."
+                        android:hint="Auto-filled from selections above, or type your own..."
                         android:inputType="textMultiLine"
-                        android:minLines="3"
+                        android:minLines="2"
                         android:gravity="top"/>
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -308,7 +316,6 @@
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
                     android:layout_marginBottom="8dp">
-
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -316,13 +323,11 @@
                         android:textColor="@color/colorGold"
                         android:textSize="18sp"
                         android:layout_marginEnd="10dp"/>
-
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:orientation="vertical">
-
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -330,7 +335,6 @@
                             android:textColor="@color/colorTextPrimary"
                             android:textSize="17sp"
                             android:textStyle="bold"/>
-
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -356,7 +360,7 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- ── AI Result Card (hidden until generated) ───────────────────── -->
+        <!-- ── AI Result Card ────────────────────────────────────────────── -->
         <androidx.cardview.widget.CardView
             android:id="@+id/cardAIResult"
             android:layout_width="match_parent"
