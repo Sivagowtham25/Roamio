@@ -63,18 +63,19 @@ public class ItineraryActivity extends AppCompatActivity {
 
     // Same system-prompt pattern as AiTripPlannerActivity (this is why it works there)
     private static final String SYSTEM_PROMPT =
-            "You are an expert Indian travel planner.\n\n" +
-                    "Your ONLY task is to generate structured, day-by-day travel itineraries.\n\n" +
-                    "STRICT RULES:\n" +
-                    "- Do NOT greet or introduce yourself\n" +
-                    "- Do NOT ask questions\n" +
-                    "- Do NOT include conversational text\n" +
-                    "- Start directly with 'Day 1'\n" +
-                    "- Follow the exact itinerary format requested\n" +
-                    "- Keep output structured, concise, and readable\n";
+            "You are Roamio AI, a mobile travel planner. Output ONLY structured itinerary text.\n\n" +
+                    "ABSOLUTE RULES — no exceptions:\n" +
+                    "1. NEVER write paragraphs. Every line must stand alone.\n" +
+                    "2. Each activity line max 12 words.\n" +
+                    "3. DO NOT greet, introduce yourself, or add commentary.\n" +
+                    "4. Start IMMEDIATELY with 'Day 1 — [Theme]'.\n" +
+                    "5. Each activity: 'HH:MM AM — emoji Short description'\n" +
+                    "6. Generate EVERY day requested — do not skip or truncate.\n" +
+                    "7. ALWAYS end with a 'Tips' section on its own line, followed by 4-5 short tips.\n" +
+                    "8. DO NOT use markdown (no **, no ##, no ---, no backticks).\n" +
+                    "9. Max 6 activities per day.\n";
     private static final String SYSTEM_REPLY =
-            "Understood! I am Roamio AI. Give me your trip details and I will create a " +
-            "detailed day-by-day itinerary for you. \u2726";
+            "Ready. I will generate every day requested. No paragraphs, short lines, emojis. Starting with Day 1. Ending with Tips.";
 
     // ── Trip data ─────────────────────────────────────────────────────────────
     private String tripId, tripName, destination, startDate, endDate,
@@ -272,7 +273,9 @@ public class ItineraryActivity extends AppCompatActivity {
                 sc.set(Integer.parseInt(s[2]), Integer.parseInt(s[1]) - 1, Integer.parseInt(s[0]));
                 ec.set(Integer.parseInt(e[2]), Integer.parseInt(e[1]) - 1, Integer.parseInt(e[0]));
                 tripDays = (int) ((ec.getTimeInMillis() - sc.getTimeInMillis()) / (1000L * 60 * 60 * 24));
+                tripDays = tripDays + 1; // inclusive: end date counts as a travel day
                 if (tripDays < 1) tripDays = 1;
+                if (tripDays > 7) tripDays = 7;
             } catch (Exception ignored) {}
         }
 
@@ -309,18 +312,34 @@ public class ItineraryActivity extends AppCompatActivity {
         sb.append("Season during travel month (").append(travelMonth).append("): ").append(season).append("\n");
         sb.append("Holidays & festivals in ").append(travelMonth).append(": ").append(holidays).append("\n");
 
-        sb.append("\n=== INSTRUCTIONS ===\n");
-        sb.append("1. Write a DAY-BY-DAY itinerary. Each day must start with: Day N\n");
-        sb.append("2. Include specific times (7:00 AM, 10:30 AM, etc.) for each activity.\n");
-        sb.append("3. Mention weather/season considerations.\n");
-        sb.append("4. If travel falls during a major festival, highlight special events.\n");
-        sb.append("5. Include breakfast/lunch/dinner suggestions with local restaurant names where possible.\n");
-        sb.append("6. Mention transport tips within the destination.\n");
-        sb.append("7. Add ticket prices / entry timings for major attractions if known.\n");
-        sb.append("8. Day 1: assume arrival; last day: account for checkout/departure.\n");
-        sb.append("9. Use emojis for readability.\n");
-        sb.append("10. End with a Tips section with 4 specific tips for ").append(travelMonth).append(".\n");
-        sb.append("11. Keep each day focused: 6-8 activities/meals maximum.\n");
+        sb.append("\n=== OUTPUT FORMAT (the app parses this — follow exactly) ===\n");
+        sb.append("Each day MUST start on its own line as: Day N \u2014 [Theme Title]\n");
+        sb.append("Each activity MUST be on its own line as: HH:MM AM \u2014 [Activity description]\n");
+        sb.append("The tips section MUST start on its own line as exactly: Tips\n");
+        sb.append("DO NOT use markdown: no **, no ##, no ---, no ===\n");
+        sb.append("DO NOT add any preamble or introduction before Day 1\n\n");
+        sb.append("EXAMPLE FORMAT:\n");
+        sb.append("Day 1 \u2014 Arrival & First Impressions\n");
+        sb.append("07:00 AM \u2014 \ud83c\udf73 Breakfast at local café\n");
+        sb.append("10:00 AM \u2014 \ud83c\udfe8 Check in to hotel, freshen up\n");
+        sb.append("02:00 PM \u2014 \ud83c� Visit main attraction (entry: \u20b950, open 9AM\u20135PM)\n");
+        sb.append("07:00 PM \u2014 \ud83c� Dinner at recommended local restaurant\n\n");
+        sb.append("Day 2 \u2014 Culture & Heritage\n");
+        sb.append("...\n\n");
+        sb.append("Tips\n");
+        sb.append("Best time to visit: October to March\n");
+        sb.append("Carry cash for local market vendors\n\n");
+        sb.append("=== CONTENT INSTRUCTIONS ===\n");
+        sb.append("1. Generate EXACTLY ").append(tripDays).append(" day(s) — every day, no skipping\n");
+        sb.append("2. Each activity line: 'HH:MM AM \u2014 emoji Short label' (max 12 words)\n");
+        sb.append("3. NO paragraphs. NO sentences. ONE idea per line.\n");
+        sb.append("4. Add entry cost & timing in brackets: (\u20b950, 9AM-5PM)\n");
+        sb.append("5. Day 1 = arrival; Day ").append(tripDays).append(" = checkout/departure\n");
+        sb.append("6. Mention season (\u2013").append(travelMonth).append(") or festival if relevant, inline\n");
+        sb.append("7. Max 6 activities per day\n");
+        sb.append("8. MANDATORY: last section must be exactly the word 'Tips' on its own line\n");
+        sb.append("9. Under Tips: exactly 4-6 short one-line tips for ").append(travelMonth).append("\n");
+        sb.append("10. DO NOT use markdown (**, ##, ---, backticks). No preamble before Day 1.\n");
 
         if (adjustmentNote != null && !adjustmentNote.isEmpty()) {
             sb.append("\n=== ADJUSTMENT REQUEST ===\n");
@@ -560,11 +579,12 @@ public class ItineraryActivity extends AppCompatActivity {
     /** Returns true if this line is a Day N / Tips section heading. */
     private boolean isSectionHeading(String line) {
         if (line.isEmpty()) return false;
-        String lower = line.toLowerCase();
-        // Matches "Day 1", "Day 1:", "📅 Day 1", "** Day 1 **", etc.
-        if (lower.replaceAll("[^a-z0-9 ]", "").trim().matches("day \\d.*")) return true;
-        // Tips section
-        if (lower.replaceAll("[^a-z]", "").startsWith("tip")) return true;
+        String clean = line.toLowerCase().replaceAll("[^a-z0-9 ]", "").trim();
+        // Matches "Day 1", "Day 1 — Title", "📅 Day 1", "Day 2 - Exploring", etc.
+        if (clean.matches("day \\d.*")) return true;
+        // Tips section — the AI may write "Tips", "Travel Tips", "Tip:", etc.
+        if (clean.equals("tips") || clean.startsWith("tips ")
+                || clean.startsWith("travel tips") || clean.startsWith("tip ")) return true;
         return false;
     }
 

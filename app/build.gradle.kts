@@ -33,7 +33,6 @@ android {
         )
         buildConfigField("String", "GEMINI_API_KEY",
             "\"${localProperties.getProperty("GEMINI_API_KEY", "")}\"")
-
         // ✅ Injects key into AndroidManifest.xml as ${mapsApiKey}
         manifestPlaceholders["mapsApiKey"] =
             localProperties.getProperty("MAPS_API_KEY", "")
@@ -84,8 +83,11 @@ dependencies {
     // ✅ GPS / Fused Location
     implementation("com.google.android.gms:play-services-location:21.2.0")
 
-    // ✅ OkHttp — for Places Nearby Search API calls
+    // ✅ OkHttp — for Gemini API calls
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
+    // ✅ Places SDK for Android (uses Android-restricted key, no HTTP needed)
+    implementation("com.google.android.libraries.places:places:3.5.0")
 
     // ✅ Glide — for loading place photos from Google
     implementation("com.github.bumptech.glide:glide:4.16.0")

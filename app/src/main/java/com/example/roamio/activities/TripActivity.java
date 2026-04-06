@@ -6,6 +6,7 @@ import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
@@ -30,6 +31,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
 import java.util.Objects;
 
 public class TripActivity extends AppCompatActivity {
@@ -151,13 +153,46 @@ public class TripActivity extends AppCompatActivity {
     private void showDatePicker(boolean isStart) {
         Calendar c = Calendar.getInstance();
         new DatePickerDialog(this, (view, year, month, day) -> {
-            String date = String.format("%02d/%02d/%04d", day, month + 1, year);
             if (isStart) {
+                String date = String.format(Locale.US, "%02d/%02d/%04d", day, month + 1, year);
                 etStartDate.setText(date);
                 startDay = day; startMonth = month; startYear = year;
+                // Invalidate end date if it's now out of range
+                if (endYear > 0) {
+                    Calendar s = Calendar.getInstance();
+                    Calendar e = Calendar.getInstance();
+                    s.set(year, month, day);
+                    e.set(endYear, endMonth, endDay);
+                    long diff = (e.getTimeInMillis() - s.getTimeInMillis()) / (1000L * 60 * 60 * 24);
+                    if (diff < 0 || diff > 7) {
+                        etEndDate.setText("");
+                        endYear = 0;
+                        Toast.makeText(this, "End date cleared — max 7-day trip", Toast.LENGTH_SHORT).show();
+                    }
+                }
             } else {
-                etEndDate.setText(date);
-                endDay = day; endMonth = month; endYear = year;
+                if (startYear == 0) {
+                    Toast.makeText(this, "Please select a start date first", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                Calendar s = Calendar.getInstance();
+                Calendar chosen = Calendar.getInstance();
+                s.set(startYear, startMonth, startDay);
+                chosen.set(year, month, day);
+                long diffDays = (chosen.getTimeInMillis() - s.getTimeInMillis()) / (1000L * 60 * 60 * 24);
+                if (diffDays < 0) {
+                    Toast.makeText(this, "End date cannot be before start date", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (diffDays > 7) {
+                    chosen.setTimeInMillis(s.getTimeInMillis() + (7L * 24 * 60 * 60 * 1000));
+                    Toast.makeText(this, "Maximum 7-day trip — end date adjusted", Toast.LENGTH_LONG).show();
+                }
+                int ey = chosen.get(Calendar.YEAR);
+                int em = chosen.get(Calendar.MONTH);
+                int ed = chosen.get(Calendar.DAY_OF_MONTH);
+                etEndDate.setText(String.format(Locale.US, "%02d/%02d/%04d", ed, em + 1, ey));
+                endDay = ed; endMonth = em; endYear = ey;
             }
         }, c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH)).show();
     }
@@ -266,6 +301,53 @@ public class TripActivity extends AppCompatActivity {
             etTravellers.requestFocus();
             return false;
         }
+
+        // ── Date range validation ─────────────────────────────────────────────
+        if (startYear > 0 && endYear > 0) {
+            Calendar s = Calendar.getInstance();
+            Calendar e = Calendar.getInstance();
+            s.set(startYear, startMonth, startDay);
+            e.set(endYear, endMonth, endDay);
+            long diffDays = (e.getTimeInMillis() - s.getTimeInMillis()) / (1000L * 60 * 60 * 24);
+            if (diffDays < 0) {
+                Toast.makeText(this, "End date cannot be before start date", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+            if (diffDays > 7) {
+                Toast.makeText(this, "Maximum trip duration is 7 days", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+        }
+
+        // ── Budget per person warning (non-blocking) ──────────────────────────
+        String budgetStr = Objects.requireNonNull(etBudget.getText()).toString().trim();
+        if (!budgetStr.isEmpty()) {
+            try {
+                int totalBudget  = Integer.parseInt(budgetStr);
+                int numPeople    = Integer.parseInt(travellers);
+                int tripDays     = 1;
+                if (startYear > 0 && endYear > 0) {
+                    Calendar s = Calendar.getInstance();
+                    Calendar e = Calendar.getInstance();
+                    s.set(startYear, startMonth, startDay);
+                    e.set(endYear, endMonth, endDay);
+                    tripDays = Math.max(1, (int)((e.getTimeInMillis() - s.getTimeInMillis()) / (1000L * 60 * 60 * 24)));
+                }
+                if (numPeople > 0) {
+                    int perPersonPerDay = totalBudget / (numPeople * tripDays);
+                    if (perPersonPerDay < 500) {
+                        Toast.makeText(this,
+                            "⚠️ Budget is very low — ₹" + perPersonPerDay + "/person/day. Consider revising.",
+                            Toast.LENGTH_LONG).show();
+                    } else if (perPersonPerDay > 15000) {
+                        Toast.makeText(this,
+                            "✨ Premium budget — ₹" + String.format(Locale.US, "%,d", perPersonPerDay) + "/person/day",
+                            Toast.LENGTH_SHORT).show();
+                    }
+                }
+            } catch (NumberFormatException ignored) {}
+        }
+
         return true;
     }
 
@@ -343,30 +425,51 @@ public class TripActivity extends AppCompatActivity {
             s.set(startYear, startMonth, startDay);
             e.set(endYear, endMonth, endDay);
             long diffMs = e.getTimeInMillis() - s.getTimeInMillis();
-            days = Math.max(1, (int)(diffMs / (1000 * 60 * 60 * 24)));
+            days = Math.min(7, Math.max(1, (int)(diffMs / (1000 * 60 * 60 * 24))));
         }
 
         List<String> plan = LocalAIPlanner.generatePlan(destination, days, budget, travellers, notes);
         showAIResult(destination, days, plan);
     }
 
-    // ── Show AI Result ────────────────────────────────────────────────────────
+    // ── Show AI Result — rendered as structured Day sections ─────────────────
     private void showAIResult(String destination, int days, List<String> plan) {
         cardAIResult.setVisibility(View.VISIBLE);
-        tvAITitle.setText("✦  AI Plan · " + destination + " · " + days + " day" + (days > 1 ? "s" : ""));
+        tvAITitle.setText("✦  AI Preview · " + destination + " · " + days + " day" + (days > 1 ? "s" : ""));
 
         llAIResult.removeAllViews();
-        for (String item : plan) {
+
+        for (String rawLine : plan) {
+            String line = rawLine.trim();
+            if (line.isEmpty() || line.startsWith("─") || line.startsWith("===")) continue;
+
+            String lower = line.toLowerCase().replaceAll("[^a-z0-9 ]", "").trim();
+            boolean isDayHeading  = lower.matches("day \\d.*");
+            boolean isTipsHeading = lower.equals("tips") || lower.startsWith("travel tip") || lower.startsWith("tip ");
+            boolean isHeading     = isDayHeading || isTipsHeading
+                    || line.startsWith("📅") || line.startsWith("💡");
+
             TextView tv = new TextView(this);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT);
-            lp.bottomMargin = dp(10);
+
+            if (isHeading) {
+                lp.topMargin    = dp(14);
+                lp.bottomMargin = dp(4);
+                tv.setTextColor(Color.parseColor(isTipsHeading ? "#00C9B1" : "#A78BFA"));
+                tv.setTextSize(14f);
+                tv.setTypeface(null, Typeface.BOLD);
+            } else {
+                lp.bottomMargin  = dp(4);
+                lp.setMarginStart(dp(8));
+                tv.setTextColor(Color.parseColor("#CCB8C4D4"));
+                tv.setTextSize(13f);
+                tv.setLineSpacing(2f, 1.2f);
+            }
+
             tv.setLayoutParams(lp);
-            tv.setText(item);
-            tv.setTextColor(Color.parseColor("#EEF2FF"));
-            tv.setTextSize(14f);
-            tv.setLineSpacing(4f, 1f);
+            tv.setText(line);
             llAIResult.addView(tv);
         }
 

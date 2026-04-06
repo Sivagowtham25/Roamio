@@ -2,9 +2,11 @@ package com.example.roamio;
 
 import android.Manifest;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -25,6 +27,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.roamio.activities.AiTripPlannerActivity;
 import com.example.roamio.activities.LoginActivity;
+import com.example.roamio.activities.MapActivity;
 import com.example.roamio.activities.NearbyActivity;
 import com.example.roamio.activities.ReviewActivity;
 import com.example.roamio.adapters.NearbyPlaceAdapter;
@@ -40,75 +43,96 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 
-/**
- * MainActivity — the Home Screen of Roamio.
- *
- * SESSION LOGIC (30-day persistence):
- *   On every cold launch, the app checks two things:
- *   1. SessionManager.isSessionValid()  — verifies that the 30-day window hasn't expired.
- *   2. FirebaseAuthManager.isLoggedIn() — verifies the Firebase token is still present locally.
- *
- *   If BOTH pass → stay on Home (this activity).
- *   If EITHER fails → redirect to LoginActivity and finish().
- */
 public class MainActivity extends AppCompatActivity {
 
-    private static final int LOCATION_PERMISSION_REQUEST = 1002;
-    private static final int PLACES_FETCH_LIMIT          = 10;
-    private static final int SEARCH_RADIUS_METERS        = 3000;
+    private static final String TAG = "MainActivity";
+    private static final int  LOCATION_PERMISSION_REQUEST = 1002;
+    private static final int  PLACES_FETCH_LIMIT          = 20;
+    private static final int  POPULAR_RADIUS_METERS       = 1500;
+    private static final int  PREF_RADIUS_METERS          = 10000;
+    private static final int  MIN_REVIEWS_POPULAR         = 50;
+    private static final long CACHE_TTL_MS                = 24 * 60 * 60 * 1000L;
 
-    // Maps user trip preferences → Google Places API type + human-readable label
-    private static final Map<String, String[]> PREF_TO_PLACES = new HashMap<String, String[]>() {{
-        put("adventure",  new String[]{"park",             "For adventure lovers"});
-        put("cultural",   new String[]{"museum",           "For culture lovers"});
-        put("beach",      new String[]{"natural_feature",  "For beach lovers"});
-        put("nature",     new String[]{"park",             "For nature lovers"});
-        put("city",       new String[]{"tourist_attraction","For city explorers"});
-        put("spiritual",  new String[]{"hindu_temple",     "For spiritual seekers"});
-        put("luxury",     new String[]{"spa",              "For luxury travellers"});
-        put("budget",     new String[]{"restaurant",       "For budget explorers"});
+    private static final String GEMINI_URL =
+            "https://generativelanguage.googleapis.com/v1beta/models/" +
+            "gemini-2.5-flash:generateContent?key=";
+
+    private static final Map<String, String[]> PREF_FALLBACK_TYPES =
+            new HashMap<String, String[]>() {{
+        put("adventure", new String[]{"park", "campground"});
+        put("cultural",  new String[]{"museum", "art_gallery"});
+        put("beach",     new String[]{"beach", "natural_feature"});
+        put("nature",    new String[]{"park", "zoo"});
+        put("city",      new String[]{"tourist_attraction", "shopping_mall"});
+        put("spiritual", new String[]{"hindu_temple", "place_of_worship"});
+        put("luxury",    new String[]{"spa", "casino"});
+        put("budget",    new String[]{"restaurant", "market"});
     }};
 
+    private static final Map<String, String> PREF_TITLE =
+            new HashMap<String, String>() {{
+        put("adventure", "For adventure lovers \uD83C\uDFD5\uFE0F");
+        put("cultural",  "For culture lovers \uD83C\uDFA8");
+        put("beach",     "For beach lovers \uD83C\uDFD6\uFE0F");
+        put("nature",    "For nature lovers \uD83C\uDF3F");
+        put("city",      "For city explorers \uD83C\uDFD9\uFE0F");
+        put("spiritual", "For spiritual seekers \uD83D\uDED5");
+        put("luxury",    "For luxury travellers \uD83D\uDC8E");
+        put("budget",    "For budget explorers \uD83D\uDCB0");
+    }};
+
+    // ── Auth / Session ────────────────────────────────────────────────────────
     private SessionManager      sessionManager;
     private FirebaseAuthManager authManager;
 
+    // ── Views ─────────────────────────────────────────────────────────────────
     private LinearLayout layoutRecommendations;
     private TextView     tvYouMightLikeTitle;
+    private RecyclerView rvPopularNearYou;
+    private RecyclerView rvYouMightLike;
 
-    // Popular near you
-    private RecyclerView       rvPopularNearYou;
+    // ── Data ──────────────────────────────────────────────────────────────────
     private NearbyPlaceAdapter popularAdapter;
-    private final List<NearbyPlace> popularPlaces = new ArrayList<>();
-
-    // You might like (preference-based)
-    private RecyclerView       rvYouMightLike;
     private NearbyPlaceAdapter likeAdapter;
-    private final List<NearbyPlace> likePlaces = new ArrayList<>();
+    private final List<NearbyPlace> popularPlaces = new ArrayList<>();
+    private final List<NearbyPlace> likePlaces    = new ArrayList<>();
 
+    // ── Location ──────────────────────────────────────────────────────────────
     private FusedLocationProviderClient fusedLocationClient;
+    private double userLat = 13.0827;
+    private double userLng = 80.2707;
+
+    // ── State (all three gates must open before "lovers" fetch fires) ─────────
+    private boolean locationReady    = false;
+    private boolean preferencesReady = false;
+    private boolean tagsReady        = false;
+
+    // ── Prefs + Gemini tags ───────────────────────────────────────────────────
+    private List<String>              userPrefs  = new ArrayList<>();
+    private Map<String, List<String>> geminiTags = new HashMap<>();
+
+    // ── Network ───────────────────────────────────────────────────────────────
     private final OkHttpClient httpClient = new OkHttpClient();
+    private final Random       random     = new Random();
 
-    // Stored after location callback; preference fetch waits for both to be ready
-    private double  userLat              = 13.0827;
-    private double  userLng              = 80.2707;
-    private String  preferredPlacesType  = "tourist_attraction"; // default
-    private boolean locationReady        = false;
-    private boolean preferencesReady     = false;
-
+    // ─────────────────────────────────────────────────────────────────────────
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         getWindow().setStatusBarColor(Color.TRANSPARENT);
         getWindow().setNavigationBarColor(Color.BLACK);
@@ -123,80 +147,65 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
-        // ── Apply status-bar inset to content so nothing hides under the status bar ──
         View contentContainer = findViewById(R.id.contentContainer);
         ViewCompat.setOnApplyWindowInsetsListener(contentContainer, (v, insets) -> {
-            int statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
-            v.setPadding(
-                    v.getPaddingLeft(),
-                    statusBarHeight + dp(16),
-                    v.getPaddingRight(),
-                    v.getPaddingBottom()
-            );
+            int top = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
+            v.setPadding(v.getPaddingLeft(), top + dp(16), v.getPaddingRight(), v.getPaddingBottom());
             return WindowInsetsCompat.CONSUMED;
         });
 
         layoutRecommendations = findViewById(R.id.layoutRecommendations);
         tvYouMightLikeTitle   = findViewById(R.id.tvYouMightLikeTitle);
 
-        // Greet user
         String userName = getIntent().getStringExtra("user_name");
         if (userName == null || userName.isEmpty()) userName = sessionManager.getSavedName();
         setupGreeting(userName);
 
-        // ── Bell icon — opens AI Planner with a travel-inspiration prompt ──────
-        // TODO: Replace with a real NotificationsActivity once
-        //       FirebaseNotificationManager is implemented.
+        // Bell → AI planner inspiration prompt
         ImageView ivBell = findViewById(R.id.ivBell);
         ivBell.setOnClickListener(v -> {
-            Intent intent = new Intent(this, AiTripPlannerActivity.class);
-            intent.putExtra(AiTripPlannerActivity.EXTRA_PROMPT,
-                    "Suggest some trending travel destinations in India right now ✈️");
-            startActivity(intent);
+            Intent i = new Intent(this, AiTripPlannerActivity.class);
+            i.putExtra(AiTripPlannerActivity.EXTRA_PROMPT,
+                    "Suggest some trending travel destinations in India right now \u2708\uFE0F");
+            startActivity(i);
             overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         });
 
-        // ── Search bar — wire IME "Search" action ──────────────────────────────
+        // Search bar
         EditText etSearch = findViewById(R.id.etSearch);
         etSearch.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                String query = v.getText().toString().trim();
-                if (!query.isEmpty()) {
-                    InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-                    if (imm != null) imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
-                    // TODO: launch search results screen with query
-                }
+                InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+                if (imm != null) imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
                 return true;
             }
             return false;
         });
 
-        // ── Popular Near You ───────────────────────────────────────────────────
+        // Popular Near You recycler
         rvPopularNearYou = findViewById(R.id.rvPopularNearYou);
         popularAdapter   = new NearbyPlaceAdapter(this, popularPlaces);
         popularAdapter.setOnPlaceClickListener(new NearbyPlaceAdapter.OnPlaceClickListener() {
-            @Override public void onPlaceClick(NearbyPlace place) { openNearby(place); }
-            @Override public void onFavouriteClick(NearbyPlace place, int position) {}
+            @Override public void onPlaceClick(NearbyPlace p)          { openMapActivity(p); }
+            @Override public void onFavouriteClick(NearbyPlace p, int pos) {}
         });
         rvPopularNearYou.setLayoutManager(
                 new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
         rvPopularNearYou.setAdapter(popularAdapter);
 
-        // ── You Might Like ─────────────────────────────────────────────────────
+        // You Might Like recycler
         rvYouMightLike = findViewById(R.id.rvYouMightLike);
         likeAdapter    = new NearbyPlaceAdapter(this, likePlaces);
         likeAdapter.setOnPlaceClickListener(new NearbyPlaceAdapter.OnPlaceClickListener() {
-            @Override public void onPlaceClick(NearbyPlace place) { openNearby(place); }
-            @Override public void onFavouriteClick(NearbyPlace place, int position) {}
+            @Override public void onPlaceClick(NearbyPlace p)          { openMapActivity(p); }
+            @Override public void onFavouriteClick(NearbyPlace p, int pos) {}
         });
         rvYouMightLike.setLayoutManager(
                 new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
         rvYouMightLike.setAdapter(likeAdapter);
 
-        // ── Load user profile → drives recommendations + preference section ───────
         loadUserProfileThenFetch();
 
-        // ── Location + Popular Near You ────────────────────────────────────────
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
@@ -211,7 +220,7 @@ public class MainActivity extends AppCompatActivity {
         setupBottomNav();
     }
 
-    // ── Load Firestore profile — drives recommendations and preference section ─
+    // ── Load profile → recs + prefs ───────────────────────────────────────────
     private void loadUserProfileThenFetch() {
         String uid = sessionManager.getSavedUid();
         if (uid == null) return;
@@ -221,128 +230,240 @@ public class MainActivity extends AppCompatActivity {
             public void onSuccess(User user) {
                 if (user == null) return;
 
-                // Recommended for you chips
-                List<String> freshRecs = com.example.roamio.activities.SignupActivity
+                List<String> recs = com.example.roamio.activities.SignupActivity
                         .TripRecommendationEngine
                         .generate(user.getAge(), user.getJobType(), user.getTripPreferences());
-                runOnUiThread(() -> populateRecommendations(freshRecs));
+                runOnUiThread(() -> populateRecommendations(recs));
 
-                // Resolve preferred place type from top preference
                 List<String> prefs = user.getTripPreferences();
                 if (prefs != null && !prefs.isEmpty()) {
-                    String topPref = prefs.get(0);
-                    String[] mapping = PREF_TO_PLACES.get(topPref);
-                    if (mapping != null) {
-                        preferredPlacesType = mapping[0];
-                        String sectionTitle = mapping[1];
-                        runOnUiThread(() -> tvYouMightLikeTitle.setText(sectionTitle));
-                    }
+                    userPrefs = new ArrayList<>(prefs);
                 }
-
                 preferencesReady = true;
                 maybeFetchPreferencePlaces();
             }
 
             @Override
-            public void onFailure(String errorMessage) {
-                // Silent fail — section stays empty
+            public void onFailure(String err) {
+                preferencesReady = true;
+                maybeFetchPreferencePlaces();
             }
         });
     }
 
-    /**
-     * Fires the "You might like" fetch exactly once, only when BOTH location
-     * and user preferences are resolved.
-     */
+    // ── Gate: all three ready → pick random pref → fetch ─────────────────────
     private synchronized void maybeFetchPreferencePlaces() {
-        if (locationReady && preferencesReady) {
-            fetchPreferencePlaces(userLat, userLng, preferredPlacesType);
-        }
+        if (!locationReady || !preferencesReady || !tagsReady) return;
+
+        List<String> prefs = userPrefs.isEmpty()
+                ? Collections.singletonList("city") : userPrefs;
+        String chosenPref = prefs.get(random.nextInt(prefs.size()));
+        String placeType  = resolveTypeForPref(chosenPref);
+
+        String title = PREF_TITLE.containsKey(chosenPref)
+                ? PREF_TITLE.get(chosenPref) : "You might like";
+        runOnUiThread(() -> tvYouMightLikeTitle.setText(title));
+
+        fetchPreferencePlaces(userLat, userLng, placeType);
+    }
+
+    private String resolveTypeForPref(String pref) {
+        List<String> types = geminiTags.get(pref);
+        if (types != null && !types.isEmpty())
+            return types.get(random.nextInt(types.size()));
+        String[] fallback = PREF_FALLBACK_TYPES.get(pref);
+        if (fallback != null && fallback.length > 0)
+            return fallback[random.nextInt(fallback.length)];
+        return "tourist_attraction";
     }
 
     // ── Permission result ──────────────────────────────────────────────────────
     @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == LOCATION_PERMISSION_REQUEST
-                && grantResults.length > 0
-                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+    public void onRequestPermissionsResult(int req, @NonNull String[] perms,
+                                           @NonNull int[] results) {
+        super.onRequestPermissionsResult(req, perms, results);
+        if (req == LOCATION_PERMISSION_REQUEST && results.length > 0
+                && results[0] == PackageManager.PERMISSION_GRANTED)
             fetchUserLocationAndLoadPlaces();
-        }
     }
 
-    // ── Get location → Popular Near You, then trigger preference fetch ─────────
+    // ── Get location ──────────────────────────────────────────────────────────
     private void fetchUserLocationAndLoadPlaces() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) return;
 
-        fusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
-            if (location != null) {
-                userLat = location.getLatitude();
-                userLng = location.getLongitude();
-            }
+        fusedLocationClient.getLastLocation().addOnSuccessListener(loc -> {
+            if (loc != null) { userLat = loc.getLatitude(); userLng = loc.getLongitude(); }
             locationReady = true;
             fetchPopularNearYou(userLat, userLng);
-            maybeFetchPreferencePlaces();
+            loadGeminiLocationTags(userLat, userLng);
         }).addOnFailureListener(e -> {
             locationReady = true;
             fetchPopularNearYou(userLat, userLng);
-            maybeFetchPreferencePlaces();
+            loadGeminiLocationTags(userLat, userLng);
         });
     }
 
-    // ── Popular Near You ───────────────────────────────────────────────────────
+    // ── Gemini location tags (cached 24 h) ────────────────────────────────────
+    private void loadGeminiLocationTags(double lat, double lng) {
+        SharedPreferences cache = getSharedPreferences("roamio_cache", MODE_PRIVATE);
+        String cacheKey = "gemini_tags_v1_" + (int)(lat * 10) + "_" + (int)(lng * 10);
+        String tsKey    = cacheKey + "_ts";
+        long   ts       = cache.getLong(tsKey, 0);
+        String cached   = cache.getString(cacheKey, null);
+
+        if (cached != null && System.currentTimeMillis() - ts < CACHE_TTL_MS) {
+            parseGeminiTagsJson(cached);
+            tagsReady = true;
+            maybeFetchPreferencePlaces();
+            return;
+        }
+
+        String prompt =
+                "I am at coordinates lat=" + String.format("%.2f", lat)
+                + " lng=" + String.format("%.2f", lng) + " (an Indian city).\n"
+                + "Return ONLY a raw JSON object mapping these 8 travel preference keys "
+                + "to 2-3 relevant Google Places API type strings for this specific location.\n"
+                + "Keys: adventure, cultural, beach, nature, city, spiritual, luxury, budget.\n"
+                + "Use only types from: park, museum, art_gallery, beach, natural_feature, "
+                + "tourist_attraction, shopping_mall, hindu_temple, place_of_worship, spa, "
+                + "restaurant, campground, zoo, amusement_park, aquarium, night_club, lodging.\n"
+                + "No markdown, no explanation. Only the JSON object.";
+
+        try {
+            JSONObject body = new JSONObject();
+            JSONArray  contents = new JSONArray();
+            JSONObject msg = new JSONObject();
+            msg.put("role", "user");
+            msg.put("parts", new JSONArray().put(new JSONObject().put("text", prompt)));
+            contents.put(msg);
+            body.put("contents", contents);
+            body.put("generationConfig",
+                    new JSONObject().put("maxOutputTokens", 256).put("temperature", 0.2));
+
+            Request req = new Request.Builder()
+                    .url(GEMINI_URL + BuildConfig.GEMINI_API_KEY)
+                    .post(RequestBody.create(body.toString(), MediaType.parse("application/json")))
+                    .build();
+
+            httpClient.newCall(req).enqueue(new Callback() {
+                @Override public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                    Log.w(TAG, "Gemini tags failed: " + e.getMessage());
+                    tagsReady = true;
+                    maybeFetchPreferencePlaces();
+                }
+
+                @Override public void onResponse(@NonNull Call call, @NonNull Response response)
+                        throws IOException {
+                    try {
+                        if (response.body() == null) throw new IOException("empty");
+                        String raw = response.body().string();
+                        String text = new JSONObject(raw)
+                                .getJSONArray("candidates").getJSONObject(0)
+                                .getJSONObject("content").getJSONArray("parts")
+                                .getJSONObject(0).getString("text");
+                        text = text.replaceAll("```json", "").replaceAll("```", "").trim();
+                        parseGeminiTagsJson(text);
+                        cache.edit().putString(cacheKey, text)
+                                .putLong(tsKey, System.currentTimeMillis()).apply();
+                        Log.d(TAG, "Gemini tags cached: " + cacheKey);
+                    } catch (Exception e) {
+                        Log.w(TAG, "Gemini tags parse error: " + e.getMessage());
+                    } finally {
+                        tagsReady = true;
+                        maybeFetchPreferencePlaces();
+                    }
+                }
+            });
+        } catch (Exception e) {
+            Log.w(TAG, "Gemini tags build error: " + e.getMessage());
+            tagsReady = true;
+            maybeFetchPreferencePlaces();
+        }
+    }
+
+    private void parseGeminiTagsJson(String json) {
+        try {
+            JSONObject root = new JSONObject(json);
+            for (String pref : new String[]{"adventure","cultural","beach","nature",
+                    "city","spiritual","luxury","budget"}) {
+                if (!root.has(pref)) continue;
+                JSONArray arr = root.getJSONArray(pref);
+                List<String> types = new ArrayList<>();
+                for (int i = 0; i < arr.length(); i++) types.add(arr.getString(i));
+                geminiTags.put(pref, types);
+            }
+            Log.d(TAG, "Gemini tags: " + geminiTags.size() + " prefs loaded");
+        } catch (Exception e) {
+            Log.w(TAG, "parseGeminiTagsJson: " + e.getMessage());
+        }
+    }
+
+    // ── Popular Near You: 1.5 km, weighted sort ───────────────────────────────
     private void fetchPopularNearYou(double lat, double lng) {
         String url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
                 + "?location=" + lat + "," + lng
-                + "&radius=" + SEARCH_RADIUS_METERS
+                + "&radius=" + POPULAR_RADIUS_METERS
                 + "&type=tourist_attraction"
-                + "&rankby=prominence"
                 + "&key=" + BuildConfig.MAPS_API_KEY;
 
-        fetchPlaces(url, popularPlaces, popularAdapter);
-    }
-
-    // ── You Might Like ─────────────────────────────────────────────────────────
-    private void fetchPreferencePlaces(double lat, double lng, String type) {
-        String url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
-                + "?location=" + lat + "," + lng
-                + "&radius=" + SEARCH_RADIUS_METERS
-                + "&type=" + type
-                + "&rankby=prominence"
-                + "&key=" + BuildConfig.MAPS_API_KEY;
-
-        fetchPlaces(url, likePlaces, likeAdapter);
-    }
-
-    // ── Shared fetch + parse + notify ─────────────────────────────────────────
-    private void fetchPlaces(String url, List<NearbyPlace> targetList,
-                             NearbyPlaceAdapter targetAdapter) {
         Request request = new Request.Builder().url(url).build();
         httpClient.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response)
-                    throws IOException {
-                if (!response.isSuccessful() || response.body() == null) return;
-                String type = url.contains("type=")
-                        ? url.split("type=")[1].split("&")[0]
-                        : "tourist_attraction";
-                List<NearbyPlace> results = parsePlaces(response.body().string(), type);
+            @Override public void onFailure(@NonNull Call c, @NonNull IOException e) {}
+            @Override public void onResponse(@NonNull Call c, @NonNull Response r) throws IOException {
+                if (!r.isSuccessful() || r.body() == null) return;
+                List<NearbyPlace> raw      = parsePlaces(r.body().string(), "tourist_attraction");
+                List<NearbyPlace> filtered = filterAndSortPopular(raw);
                 runOnUiThread(() -> {
-                    targetList.clear();
-                    targetList.addAll(results);
-                    targetAdapter.notifyDataSetChanged();
+                    popularPlaces.clear();
+                    popularPlaces.addAll(filtered);
+                    popularAdapter.notifyDataSetChanged();
                 });
             }
         });
     }
 
-    // ── Parse Places JSON ──────────────────────────────────────────────────────
+    /**
+     * score = rating x log10(reviewCount + 1)
+     * Heavy review-count bias: 4★/1500 reviews beats 5★/100 reviews.
+     */
+    private List<NearbyPlace> filterAndSortPopular(List<NearbyPlace> raw) {
+        List<NearbyPlace> eligible = new ArrayList<>();
+        for (NearbyPlace p : raw) {
+            if (p.getUserRatingsTotal() >= MIN_REVIEWS_POPULAR) eligible.add(p);
+        }
+        Collections.sort(eligible, (a, b) -> {
+            double sa = a.getRating() * Math.log10(a.getUserRatingsTotal() + 1);
+            double sb = b.getRating() * Math.log10(b.getUserRatingsTotal() + 1);
+            return Double.compare(sb, sa);
+        });
+        return eligible.subList(0, Math.min(10, eligible.size()));
+    }
+
+    // ── You Might Like: 10 km city-wide, Gemini-driven type ──────────────────
+    private void fetchPreferencePlaces(double lat, double lng, String type) {
+        String url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
+                + "?location=" + lat + "," + lng
+                + "&radius=" + PREF_RADIUS_METERS
+                + "&type=" + type
+                + "&key=" + BuildConfig.MAPS_API_KEY;
+
+        Request request = new Request.Builder().url(url).build();
+        httpClient.newCall(request).enqueue(new Callback() {
+            @Override public void onFailure(@NonNull Call c, @NonNull IOException e) {}
+            @Override public void onResponse(@NonNull Call c, @NonNull Response r) throws IOException {
+                if (!r.isSuccessful() || r.body() == null) return;
+                List<NearbyPlace> results = parsePlaces(r.body().string(), type);
+                runOnUiThread(() -> {
+                    likePlaces.clear();
+                    likePlaces.addAll(results.subList(0, Math.min(10, results.size())));
+                    likeAdapter.notifyDataSetChanged();
+                });
+            }
+        });
+    }
+
+    // ── Parse Places JSON (includes userRatingsTotal) ─────────────────────────
     private List<NearbyPlace> parsePlaces(String json, String category) {
         List<NearbyPlace> list = new ArrayList<>();
         try {
@@ -353,37 +474,44 @@ public class MainActivity extends AppCompatActivity {
                 String     placeId = obj.optString("place_id", "");
                 String     address = obj.optString("vicinity", "");
                 double     rating  = obj.optDouble("rating", 0.0);
+                int        reviews = obj.optInt("user_ratings_total", 0);
 
-                JSONObject loc = obj.getJSONObject("geometry").getJSONObject("location");
-                double pLat = loc.getDouble("lat");
-                double pLng = loc.getDouble("lng");
+                JSONObject geometry = obj.optJSONObject("geometry");
+                if (geometry == null) continue;
+                JSONObject loc = geometry.optJSONObject("location");
+                if (loc == null) continue;
 
                 String photoRef = "";
-                if (obj.has("photos")) {
-                    photoRef = obj.getJSONArray("photos")
-                            .getJSONObject(0)
+                if (obj.has("photos"))
+                    photoRef = obj.getJSONArray("photos").getJSONObject(0)
                             .optString("photo_reference", "");
-                }
-                list.add(new NearbyPlace(name, address, pLat, pLng,
-                        rating, placeId, photoRef, category));
+
+                list.add(new NearbyPlace(name, address,
+                        loc.getDouble("lat"), loc.getDouble("lng"),
+                        rating, reviews, placeId, photoRef, category));
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
 
-    // ── Open NearbyActivity centred on a place ─────────────────────────────────
-    private void openNearby(NearbyPlace place) {
-        Intent i = new Intent(this, NearbyActivity.class);
-        i.putExtra("destination", place.getName());
-        i.putExtra("dest_lat", place.getLat());
-        i.putExtra("dest_lng", place.getLng());
+    // ── Open MapActivity ──────────────────────────────────────────────────────
+    private void openMapActivity(NearbyPlace place) {
+        Intent i = new Intent(this, MapActivity.class);
+        i.putExtra(MapActivity.EXTRA_NAME,     place.getName());
+        i.putExtra(MapActivity.EXTRA_ADDRESS,  place.getAddress());
+        i.putExtra(MapActivity.EXTRA_LAT,      place.getLat());
+        i.putExtra(MapActivity.EXTRA_LNG,      place.getLng());
+        i.putExtra(MapActivity.EXTRA_RATING,   place.getRating());
+        i.putExtra(MapActivity.EXTRA_REVIEWS,  place.getUserRatingsTotal());
+        i.putExtra(MapActivity.EXTRA_PLACE_ID, place.getPlaceId());
+        i.putExtra(MapActivity.EXTRA_CATEGORY, place.getCategory());
+        i.putExtra(MapActivity.EXTRA_USER_LAT, userLat);
+        i.putExtra(MapActivity.EXTRA_USER_LNG, userLng);
         startActivity(i);
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
 
-    // ── Session redirect ───────────────────────────────────────────────────────
+    // ── Session redirect ──────────────────────────────────────────────────────
     private void redirectToLogin() {
         sessionManager.clearSession();
         Intent intent = new Intent(this, LoginActivity.class);
@@ -393,22 +521,17 @@ public class MainActivity extends AppCompatActivity {
         finish();
     }
 
-    // ── Greeting ───────────────────────────────────────────────────────────────
+    // ── Greeting ──────────────────────────────────────────────────────────────
     private void setupGreeting(String name) {
-        TextView tvWhereTo = findViewById(R.id.tvWhereTo);
+        TextView tv = findViewById(R.id.tvWhereTo);
         if (name != null && !name.isEmpty() && !name.equals("Traveller")) {
-            String firstName = "";
-            if (name != null && !name.trim().isEmpty()) {
-                firstName = name.trim().split("\\s+")[0];
-            }
-
-            tvWhereTo.setText("Where to,\n" + firstName + "?");
+            tv.setText("Where to,\n" + name.trim().split("\\s+")[0] + "?");
         } else {
-            tvWhereTo.setText("Where to today?");
+            tv.setText("Where to today?");
         }
     }
 
-    // ── Recommended for you chips ──────────────────────────────────────────────
+    // ── Recommended for you ───────────────────────────────────────────────────
     private void populateRecommendations(List<String> recommendations) {
         layoutRecommendations.removeAllViews();
         for (String rec : recommendations) {
@@ -421,15 +544,13 @@ public class MainActivity extends AppCompatActivity {
             row.setClickable(true);
             row.setFocusable(true);
 
-            // Ripple feedback on tap
             int[] attrs = new int[]{android.R.attr.selectableItemBackground};
             android.content.res.TypedArray ta = obtainStyledAttributes(attrs);
             row.setForeground(ta.getDrawable(0));
             ta.recycle();
 
             LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT);
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
             rowLp.bottomMargin = dp(10);
             row.setLayoutParams(rowLp);
 
@@ -457,12 +578,10 @@ public class MainActivity extends AppCompatActivity {
             tag.setTextColor(Color.parseColor("#666688"));
             tag.setTextSize(11f);
             LinearLayout.LayoutParams tagLp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT);
+                    LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
             tagLp.topMargin = dp(3);
             tag.setLayoutParams(tagLp);
             textBlock.addView(tag);
-
             row.addView(textBlock);
 
             TextView chevron = new TextView(this);
@@ -472,10 +591,8 @@ public class MainActivity extends AppCompatActivity {
             chevron.setPadding(dp(8), 0, 0, 0);
             row.addView(chevron);
 
-            // ── Tap → open AI Planner with this recommendation as the prompt ──
             final String prompt = "Tell me more about: " + rec
-                    + ". Give me a full itinerary, estimated budget, best time to go, "
-                    + "and top tips.";
+                    + ". Give me a full itinerary, estimated budget, best time to go, and top tips.";
             row.setOnClickListener(v -> {
                 Intent intent = new Intent(this, AiTripPlannerActivity.class);
                 intent.putExtra(AiTripPlannerActivity.EXTRA_PROMPT, prompt);
@@ -487,14 +604,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // ── Bottom navigation ──────────────────────────────────────────────────────
+    // ── Bottom navigation ─────────────────────────────────────────────────────
     private void setupBottomNav() {
-        // Home — scroll to top
         findViewById(R.id.navExplore).setOnClickListener(v -> {
-            View scrollView = findViewById(R.id.nestedScrollView);
-            if (scrollView instanceof androidx.core.widget.NestedScrollView) {
-                ((androidx.core.widget.NestedScrollView) scrollView).smoothScrollTo(0, 0);
-            }
+            View sv = findViewById(R.id.nestedScrollView);
+            if (sv instanceof androidx.core.widget.NestedScrollView)
+                ((androidx.core.widget.NestedScrollView) sv).smoothScrollTo(0, 0);
         });
         findViewById(R.id.navNearby).setOnClickListener(v -> {
             startActivity(new Intent(this, NearbyActivity.class));
@@ -509,12 +624,10 @@ public class MainActivity extends AppCompatActivity {
             overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         });
         findViewById(R.id.navAccount).setOnClickListener(v ->
-                startActivity(new Intent(this,
-                        com.example.roamio.activities.ProfileActivity.class)));
+                startActivity(new Intent(this, com.example.roamio.activities.ProfileActivity.class)));
     }
 
-    // ── dp helper ──────────────────────────────────────────────────────────────
-    private int dp(int value) {
-        return Math.round(value * getResources().getDisplayMetrics().density);
+    private int dp(int v) {
+        return Math.round(v * getResources().getDisplayMetrics().density);
     }
 }

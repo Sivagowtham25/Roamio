@@ -54,24 +54,33 @@ public class NearbyPlaceAdapter extends RecyclerView.Adapter<NearbyPlaceAdapter.
 
         holder.tvPlaceName.setText(place.getName());
 
-        // Show the whole chip container only when a rating exists
+        // Show rating + review count in one chip
         if (place.getRating() > 0) {
-            holder.tvRating.setText(String.format("★ %.1f", place.getRating()));
+            String ratingText;
+            int reviews = place.getUserRatingsTotal();
+            if (reviews >= 1000) {
+                ratingText = String.format("\u2605 %.1f \u00b7 %.1fk",
+                        place.getRating(), reviews / 1000.0);
+            } else if (reviews > 0) {
+                ratingText = String.format("\u2605 %.1f \u00b7 %d",
+                        place.getRating(), reviews);
+            } else {
+                ratingText = String.format("\u2605 %.1f", place.getRating());
+            }
+            holder.tvRating.setText(ratingText);
             holder.ratingChip.setVisibility(View.VISIBLE);
         } else {
             holder.ratingChip.setVisibility(View.GONE);
         }
 
-        // Load image from Google Places Photo API v1
-        // place.getPhotoReference() now holds the resource name, e.g.:
-        //   "places/ChIJ.../photos/AXCi2y..."
-        // The v1 photo URL format:
-        //   https://places.googleapis.com/v1/{name}/media?key=KEY&maxWidthPx=400
+        // Load image from Google Places Photo API (legacy)
+        // place.getPhotoReference() holds the photo_reference hash from the
+        // legacy Nearby Search API used in NearbyActivity and MainActivity.
         if (place.hasPhoto()) {
-            String photoUrl = "https://places.googleapis.com/v1/"
-                    + place.getPhotoReference()
-                    + "/media?key=" + BuildConfig.MAPS_API_KEY
-                    + "&maxWidthPx=400";
+            String photoUrl = "https://maps.googleapis.com/maps/api/place/photo"
+                    + "?maxwidth=400"
+                    + "&photo_reference=" + place.getPhotoReference()
+                    + "&key=" + BuildConfig.MAPS_API_KEY;
 
             Glide.with(context)
                     .load(photoUrl)

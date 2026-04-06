@@ -514,7 +514,7 @@ public class NearbyActivity extends AppCompatActivity implements OnMapReadyCallb
                 }
 
                 list.add(new NearbyPlace(name, address, pLat, pLng,
-                        rating, placeId, photoRef, category));
+                        rating, 0, placeId, photoRef, category));
             }
         } catch (Exception e) {
             Log.e(TAG, "parsePlaces error: " + e.getMessage());
