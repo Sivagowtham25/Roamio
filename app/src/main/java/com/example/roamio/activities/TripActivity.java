@@ -4,6 +4,7 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
@@ -305,9 +306,19 @@ public class TripActivity extends AppCompatActivity {
                 .addOnSuccessListener(ref -> {
                     btnCreateTrip.setEnabled(true);
                     btnCreateTrip.setText("Create Trip");
-                    Toast.makeText(this,
-                            "\"" + tripName + "\" saved to your trips! ✈️",
-                            Toast.LENGTH_LONG).show();
+                    // Navigate straight to itinerary planning
+                    Intent intent = new Intent(this, ItineraryActivity.class);
+                    intent.putExtra(ItineraryActivity.EXTRA_TRIP_ID,     ref.getId());
+                    intent.putExtra(ItineraryActivity.EXTRA_TRIP_NAME,   tripName);
+                    intent.putExtra(ItineraryActivity.EXTRA_DESTINATION, destination);
+                    intent.putExtra(ItineraryActivity.EXTRA_START_DATE,  startDate);
+                    intent.putExtra(ItineraryActivity.EXTRA_END_DATE,    endDate);
+                    intent.putExtra(ItineraryActivity.EXTRA_TRAVELLERS,  travellers);
+                    intent.putExtra(ItineraryActivity.EXTRA_BUDGET,      budget);
+                    intent.putExtra(ItineraryActivity.EXTRA_KEYWORDS,    notes);
+                    startActivity(intent);
+                    overridePendingTransition(R.anim.slide_up, R.anim.fade_out);
+                    finish();
                 })
                 .addOnFailureListener(e -> {
                     btnCreateTrip.setEnabled(true);

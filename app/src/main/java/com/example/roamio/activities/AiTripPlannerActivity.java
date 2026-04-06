@@ -29,10 +29,6 @@ import java.util.List;
 
 import okhttp3.Call;
 import okhttp3.Callback;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -42,28 +38,29 @@ import okhttp3.Response;
 
 public class AiTripPlannerActivity extends AppCompatActivity {
 
+    /** Pass a non-empty string to pre-fill the first user message automatically. */
+    public static final String EXTRA_PROMPT = "extra_prompt";
+
     // ── Gemini API endpoint ───────────────────────────────────────────────────
     private static final String GEMINI_URL =
             "https://generativelanguage.googleapis.com/v1beta/models/" +
-                    "gemini-2.0-flash:generateContent?key=";
+                    "gemini-2.5-flash:generateContent?key=";
 
     private static final String SYSTEM_PROMPT =
-            "You are Roamio AI, a friendly and expert travel planning assistant. " +
-                    "Your ONLY purpose is to help users plan trips, create itineraries, " +
-                    "suggest destinations, estimate budgets, recommend hotels and restaurants, " +
-                    "give packing tips, and provide travel-related advice. " +
-                    "If the user asks anything NOT related to travel or trip planning " +
-                    "(like coding, math, politics, health, relationships, or general knowledge), " +
-                    "you must politely decline and redirect them to travel topics. " +
-                    "Say something like: 'I am only able to help with trip planning! " +
-                    "Ask me about destinations, itineraries, or travel tips.' " +
-                    "Always be warm, enthusiastic about travel, and keep responses concise and helpful.";
+            "You are an expert Travel planner.\n\n" +
+                    "Your ONLY task is to generate structured, day-by-day travel itineraries.\n\n" +
+                    "STRICT RULES:\n" +
+                    "- Do NOT greet or introduce yourself\n" +
+                    "- Do NOT ask questions\n" +
+                    "- Do NOT include conversational text\n" +
+                    "- Start directly with 'Day 1'\n" +
+                    "- Follow the exact itinerary format requested\n" +
+                    "- Keep output structured, concise, and readable\n";
 
     private static final String SYSTEM_REPLY =
-            "Understood! I am Roamio AI, your personal trip planning assistant. " +
-                    "I can help you plan itineraries, find destinations, estimate budgets, " +
-                    "suggest hotels and restaurants, and give travel tips. " +
-                    "Where would you like to travel? 🌍";
+            "Understood. I will respond with structured, day-by-day itineraries only. " +
+                    "No greetings, no questions, no introductions. " +
+                    "I start directly with Day 1 when given trip details.";
 
     // ── Views ─────────────────────────────────────────────────────────────────
     private RecyclerView   rvChat;
@@ -78,7 +75,12 @@ public class AiTripPlannerActivity extends AppCompatActivity {
     private final List<JSONObject> conversationHistory = new ArrayList<>();
 
     // ── Network ───────────────────────────────────────────────────────────────
-    private final OkHttpClient httpClient = new OkHttpClient();
+    private final OkHttpClient httpClient = new OkHttpClient.Builder()
+            .connectTimeout(20, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+            .writeTimeout(20, java.util.concurrent.TimeUnit.SECONDS)
+            .retryOnConnectionFailure(true)
+            .build();
 
     // ─────────────────────────────────────────────────────────────────────────
     @Override
@@ -91,6 +93,13 @@ public class AiTripPlannerActivity extends AppCompatActivity {
         bindViews();
         setupRecyclerView();
         showWelcomeMessage();
+
+        // If launched with a pre-filled prompt (e.g. from a recommendation row
+        // or the bell icon), fire it automatically so the user lands mid-conversation.
+        String prompt = getIntent().getStringExtra(EXTRA_PROMPT);
+        if (prompt != null && !prompt.trim().isEmpty()) {
+            sendMessage(prompt.trim());
+        }
     }
 
     // ── Bind & wire views ─────────────────────────────────────────────────────
@@ -135,13 +144,9 @@ public class AiTripPlannerActivity extends AppCompatActivity {
 
     // ── Send a message ────────────────────────────────────────────────────────
     private void sendMessage(String text) {
-        // Add user bubble
         addUserMessage(text);
-
-        // Show typing indicator
         showTyping(true);
 
-        // Add to conversation history for context
         try {
             JSONObject userTurn = new JSONObject();
             userTurn.put("role", "user");
@@ -159,12 +164,9 @@ public class AiTripPlannerActivity extends AppCompatActivity {
     // ── Gemini API call ───────────────────────────────────────────────────────
     private void callGeminiApi(String userText) {
         try {
-            // Build contents array
-            // Slot 0: system prompt as user+model pair (focuses AI on trips only)
-            // Slot 1..N: real conversation history
             JSONArray contents = new JSONArray();
 
-            // System instruction pair (invisible to UI)
+            // Invisible system instruction pair
             JSONObject sysUser = new JSONObject();
             sysUser.put("role", "user");
             sysUser.put("parts", new JSONArray()
@@ -177,17 +179,14 @@ public class AiTripPlannerActivity extends AppCompatActivity {
                     .put(new JSONObject().put("text", SYSTEM_REPLY)));
             contents.put(sysModel);
 
-            // Add full real conversation history
             for (JSONObject turn : conversationHistory) {
                 contents.put(turn);
             }
 
-            // Generation config
             JSONObject genConfig = new JSONObject();
             genConfig.put("temperature", 0.8);
-            genConfig.put("maxOutputTokens", 1024);
+            genConfig.put("maxOutputTokens", 4096);
 
-            // Request body
             JSONObject body = new JSONObject();
             body.put("contents", contents);
             body.put("generationConfig", genConfig);
@@ -236,7 +235,6 @@ public class AiTripPlannerActivity extends AppCompatActivity {
                         showTyping(false);
                         addAiMessage(aiText);
 
-                        // Add AI turn to history for multi-turn context
                         try {
                             JSONObject modelTurn = new JSONObject();
                             modelTurn.put("role", "model");
@@ -261,13 +259,10 @@ public class AiTripPlannerActivity extends AppCompatActivity {
     private String parseGeminiResponse(String json) {
         try {
             JSONObject root = new JSONObject(json);
-
-            // Check for API error
             if (root.has("error")) {
                 String errMsg = root.getJSONObject("error").optString("message", "API error");
                 return "Error: " + errMsg;
             }
-
             return root
                     .getJSONArray("candidates")
                     .getJSONObject(0)
@@ -275,7 +270,6 @@ public class AiTripPlannerActivity extends AppCompatActivity {
                     .getJSONArray("parts")
                     .getJSONObject(0)
                     .getString("text");
-
         } catch (Exception e) {
             return "I had trouble understanding that response. Please try again!";
         }

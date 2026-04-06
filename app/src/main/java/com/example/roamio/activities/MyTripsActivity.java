@@ -2,7 +2,9 @@ package com.example.roamio.activities;
 
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
@@ -45,10 +47,17 @@ public class MyTripsActivity extends AppCompatActivity {
 
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
         findViewById(R.id.btnAddTrip).setOnClickListener(v -> {
-            startActivity(new android.content.Intent(this, TripActivity.class));
+            startActivity(new Intent(this, TripActivity.class));
             overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         });
 
+        // loadTrips() is called in onResume() which always fires after onCreate,
+        // so we do NOT call it here — avoids a double async load that causes duplicates.
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
         loadTrips();
     }
 
@@ -80,6 +89,7 @@ public class MyTripsActivity extends AppCompatActivity {
 
                     int delay = 0;
                     for (QueryDocumentSnapshot doc : snapshots) {
+                        String docId      = doc.getId();
                         String destination = doc.getString("destination");
                         String tripName    = doc.getString("tripName");
                         String startDate   = doc.getString("startDate");
@@ -87,14 +97,27 @@ public class MyTripsActivity extends AppCompatActivity {
                         String travellers  = doc.getString("travellers");
                         String budget      = doc.getString("budget");
                         String notes       = doc.getString("notes");
+                        // keywords is stored as a List<String>, not a plain String
+                        String keywords;
+                        try {
+                            java.util.List<String> kwList = (java.util.List<String>) doc.get("keywords");
+                            keywords = (kwList != null && !kwList.isEmpty())
+                                    ? android.text.TextUtils.join(", ", kwList)
+                                    : null;
+                        } catch (Exception ignored) {
+                            keywords = doc.getString("keywords"); // fallback for old docs
+                        }
 
-                        View card = buildTripCard(
-                                destination, tripName, startDate,
-                                endDate, travellers, budget, notes, doc.getId(), uid);
+                        // Build card (initially shows "Create Itinerary")
+                        View card = buildTripCard(destination, tripName, startDate,
+                                endDate, travellers, budget, notes, keywords, docId, uid);
 
                         llTrips.addView(card);
                         animateCard(card, delay);
                         delay += 80;
+
+                        // Check whether itinerary already exists — update badge async
+                        checkItineraryExists(docId, uid, card);
                     }
                 })
                 .addOnFailureListener(e -> {
@@ -104,11 +127,32 @@ public class MyTripsActivity extends AppCompatActivity {
                 });
     }
 
+    // ── Check if itinerary exists and update the CTA button label ────────────
+    private void checkItineraryExists(String docId, String uid, View card) {
+        db.collection("users").document(uid)
+                .collection("trips").document(docId)
+                .collection("itinerary").document("plan")
+                .get()
+                .addOnSuccessListener(doc -> {
+                    TextView btnItinerary = card.findViewWithTag("btnItinerary");
+                    if (btnItinerary == null) return;
+                    if (doc.exists() && doc.getString("content") != null
+                            && !doc.getString("content").isEmpty()) {
+                        btnItinerary.setText("📋  View Itinerary");
+                        btnItinerary.setTextColor(Color.parseColor("#00C9B1"));
+                    } else {
+                        btnItinerary.setText("✦  Create Itinerary");
+                        btnItinerary.setTextColor(Color.parseColor("#88AAC0CC"));
+                    }
+                });
+    }
+
     // ── Build a trip card dynamically ─────────────────────────────────────────
     private View buildTripCard(String destination, String tripName,
                                String startDate, String endDate,
                                String travellers, String budget,
-                               String notes, String docId, String uid) {
+                               String notes, String keywords,
+                               String docId, String uid) {
 
         // Outer card
         CardView card = new CardView(this);
@@ -156,17 +200,17 @@ public class MyTripsActivity extends AppCompatActivity {
         tvName.setText(tripName != null ? tripName : "My Trip");
         tvName.setTextColor(Color.parseColor("#EEF2FF"));
         tvName.setTextSize(16f);
-        tvName.setTypeface(null, android.graphics.Typeface.BOLD);
+        tvName.setTypeface(null, Typeface.BOLD);
 
         TextView tvDest = new TextView(this);
         tvDest.setText("📍  " + (destination != null ? destination : "—"));
         tvDest.setTextColor(Color.parseColor("#00C9B1"));
         tvDest.setTextSize(13f);
-        LinearLayout.LayoutParams dp2 = new LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams destLp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
-        dp2.topMargin = dp(3);
-        tvDest.setLayoutParams(dp2);
+        destLp.topMargin = dp(3);
+        tvDest.setLayoutParams(destLp);
 
         nameCol.addView(tvName);
         nameCol.addView(tvDest);
@@ -211,7 +255,8 @@ public class MyTripsActivity extends AppCompatActivity {
             LinearLayout.LayoutParams np = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT);
-            np.topMargin = dp(8);
+            np.topMargin = dp(4);
+            np.bottomMargin = dp(6);
             tvNotes.setLayoutParams(np);
             tvNotes.setText("🗒  " + notes);
             tvNotes.setTextColor(Color.parseColor("#88AAC0CC"));
@@ -220,6 +265,52 @@ public class MyTripsActivity extends AppCompatActivity {
             tvNotes.setEllipsize(android.text.TextUtils.TruncateAt.END);
             inner.addView(tvNotes);
         }
+
+        // ── Divider before CTA ────────────────────────────────────────────────
+        View divider2 = new View(this);
+        LinearLayout.LayoutParams dv2p = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(1));
+        dv2p.topMargin = dp(10);
+        dv2p.bottomMargin = dp(12);
+        divider2.setLayoutParams(dv2p);
+        divider2.setBackgroundColor(Color.parseColor("#1AFFFFFF"));
+        inner.addView(divider2);
+
+        // ── Create / View Itinerary CTA ───────────────────────────────────────
+        TextView btnItinerary = new TextView(this);
+        btnItinerary.setTag("btnItinerary");  // used by checkItineraryExists()
+        btnItinerary.setText("✦  Create Itinerary");  // default; async check updates it
+        btnItinerary.setTextColor(Color.parseColor("#88AAC0CC"));
+        btnItinerary.setTextSize(14f);
+        btnItinerary.setTypeface(null, Typeface.BOLD);
+        btnItinerary.setGravity(android.view.Gravity.CENTER);
+        btnItinerary.setPadding(dp(12), dp(10), dp(12), dp(4));
+        btnItinerary.setClickable(true);
+        btnItinerary.setFocusable(true);
+
+        final String finalDestination = destination;
+        final String finalTripName    = tripName;
+        final String finalStartDate   = startDate;
+        final String finalEndDate     = endDate;
+        final String finalTravellers  = travellers;
+        final String finalBudget      = budget;
+        final String finalKeywords    = keywords != null ? keywords : (notes != null ? notes : "");
+
+        btnItinerary.setOnClickListener(v -> {
+            Intent intent = new Intent(this, ItineraryActivity.class);
+            intent.putExtra(ItineraryActivity.EXTRA_TRIP_ID,     docId);
+            intent.putExtra(ItineraryActivity.EXTRA_TRIP_NAME,   finalTripName);
+            intent.putExtra(ItineraryActivity.EXTRA_DESTINATION, finalDestination);
+            intent.putExtra(ItineraryActivity.EXTRA_START_DATE,  finalStartDate);
+            intent.putExtra(ItineraryActivity.EXTRA_END_DATE,    finalEndDate);
+            intent.putExtra(ItineraryActivity.EXTRA_TRAVELLERS,  finalTravellers);
+            intent.putExtra(ItineraryActivity.EXTRA_BUDGET,      finalBudget);
+            intent.putExtra(ItineraryActivity.EXTRA_KEYWORDS,    finalKeywords);
+            startActivity(intent);
+            overridePendingTransition(R.anim.slide_up, R.anim.fade_out);
+        });
+
+        inner.addView(btnItinerary);
 
         card.addView(inner);
         return card;

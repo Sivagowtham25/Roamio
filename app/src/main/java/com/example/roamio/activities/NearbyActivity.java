@@ -47,8 +47,10 @@ import java.util.List;
 
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 
 /**
@@ -105,7 +107,12 @@ public class NearbyActivity extends AppCompatActivity implements OnMapReadyCallb
     private String selectedCategory = "restaurant"; // default
 
     // ── Network ───────────────────────────────────────────────────────────────
-    private final OkHttpClient httpClient = new OkHttpClient();
+    private final OkHttpClient httpClient = new OkHttpClient.Builder()
+            .connectTimeout(20, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+            .writeTimeout(20, java.util.concurrent.TimeUnit.SECONDS)
+            .retryOnConnectionFailure(true)
+            .build();
 
     // ─────────────────────────────────────────────────────────────────────────
     @Override
@@ -316,20 +323,61 @@ public class NearbyActivity extends AppCompatActivity implements OnMapReadyCallb
         }
     }
 
-    // ── Places API: Nearby Search ─────────────────────────────────────────────
+    // ── Places API v1: Nearby Search ─────────────────────────────────────────
+    private static final String PLACES_V1_ENDPOINT =
+            "https://places.googleapis.com/v1/places:searchNearby";
+    private static final String PLACES_FIELD_MASK =
+            "places.id,places.displayName,places.shortFormattedAddress," +
+                    "places.rating,places.location,places.photos";
+    private static final MediaType JSON_MEDIA_TYPE =
+            MediaType.parse("application/json; charset=utf-8");
+
+    private boolean isApiKeyValid() {
+        String key = BuildConfig.MAPS_API_KEY;
+        if (key == null || key.isEmpty()) {
+            Toast.makeText(this, "Maps API key is missing.", Toast.LENGTH_LONG).show();
+            return false;
+        }
+        return true;
+    }
+
     private void searchNearbyPlaces(double lat, double lng, String type) {
+        if (!isApiKeyValid()) return;
         showLoading(true);
         clearMarkers();
         placeList.clear();
         adapter.notifyDataSetChanged();
 
-        String url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
-                + "?location=" + lat + "," + lng
-                + "&radius=" + SEARCH_RADIUS_METERS
-                + "&type=" + type
-                + "&key=" + BuildConfig.MAPS_API_KEY;
+        // Build POST body for Places API v1
+        JSONObject bodyJson = new JSONObject();
+        try {
+            JSONObject center = new JSONObject();
+            center.put("latitude", lat);
+            center.put("longitude", lng);
 
-        Request request = new Request.Builder().url(url).build();
+            JSONObject circle = new JSONObject();
+            circle.put("center", center);
+            circle.put("radius", (double) SEARCH_RADIUS_METERS);
+
+            JSONObject locationRestriction = new JSONObject();
+            locationRestriction.put("circle", circle);
+
+            bodyJson.put("includedTypes", new JSONArray().put(type));
+            bodyJson.put("maxResultCount", 20);
+            bodyJson.put("locationRestriction", locationRestriction);
+        } catch (Exception e) {
+            e.printStackTrace();
+            showLoading(false);
+            return;
+        }
+
+        RequestBody requestBody = RequestBody.create(bodyJson.toString(), JSON_MEDIA_TYPE);
+        Request request = new Request.Builder()
+                .url(PLACES_V1_ENDPOINT)
+                .post(requestBody)
+                .addHeader("X-Goog-Api-Key", BuildConfig.MAPS_API_KEY)
+                .addHeader("X-Goog-FieldMask", PLACES_FIELD_MASK)
+                .build();
 
         httpClient.newCall(request).enqueue(new Callback() {
             @Override
@@ -337,19 +385,34 @@ public class NearbyActivity extends AppCompatActivity implements OnMapReadyCallb
                 runOnUiThread(() -> {
                     showLoading(false);
                     Toast.makeText(NearbyActivity.this,
-                            "Network error. Check your connection.", Toast.LENGTH_SHORT).show();
+                            "Network error: " + e.getMessage() + "\nCheck your internet connection.",
+                            Toast.LENGTH_LONG).show();
                 });
             }
 
             @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                if (!response.isSuccessful() || response.body() == null) {
-                    runOnUiThread(() -> showLoading(false));
+            public void onResponse(@NonNull Call call, @NonNull Response response)
+                    throws IOException {
+                if (!response.isSuccessful()) {
+                    final int code = response.code();
+                    runOnUiThread(() -> {
+                        showLoading(false);
+                        Toast.makeText(NearbyActivity.this,
+                                "HTTP error " + code + " from Places API.",
+                                Toast.LENGTH_LONG).show();
+                    });
+                    return;
+                }
+                if (response.body() == null) {
+                    runOnUiThread(() -> {
+                        showLoading(false);
+                        Toast.makeText(NearbyActivity.this,
+                                "Empty response from Places API.", Toast.LENGTH_SHORT).show();
+                    });
                     return;
                 }
 
-                String body = response.body().string();
-                List<NearbyPlace> results = parsePlaces(body, type);
+                List<NearbyPlace> results = parsePlaces(response.body().string(), type);
 
                 runOnUiThread(() -> {
                     showLoading(false);
@@ -360,41 +423,49 @@ public class NearbyActivity extends AppCompatActivity implements OnMapReadyCallb
 
                     if (results.isEmpty()) {
                         Toast.makeText(NearbyActivity.this,
-                                "No " + type + "s found nearby", Toast.LENGTH_SHORT).show();
+                                "No results found nearby.", Toast.LENGTH_SHORT).show();
                     }
                 });
             }
         });
     }
 
-    // ── Parse Places JSON ─────────────────────────────────────────────────────
+
+
+    // ── Parse Places API v1 JSON ─────────────────────────────────────────────
     private List<NearbyPlace> parsePlaces(String json, String category) {
         List<NearbyPlace> list = new ArrayList<>();
         try {
-            JSONObject root    = new JSONObject(json);
-            JSONArray  results = root.getJSONArray("results");
+            JSONObject root   = new JSONObject(json);
+            JSONArray  places = root.optJSONArray("places");
+            if (places == null) return list;
 
-            for (int i = 0; i < Math.min(results.length(), 20); i++) {
-                JSONObject obj = results.getJSONObject(i);
+            for (int i = 0; i < Math.min(places.length(), 20); i++) {
+                JSONObject obj = places.getJSONObject(i);
 
-                String name     = obj.optString("name", "Unknown");
-                String placeId  = obj.optString("place_id", "");
-                String address  = obj.optString("vicinity", "");
-                double rating   = obj.optDouble("rating", 0.0);
+                // v1: displayName.text
+                JSONObject displayName = obj.optJSONObject("displayName");
+                String name    = displayName != null
+                        ? displayName.optString("text", "Unknown") : "Unknown";
+                String placeId = obj.optString("id", "");
+                String address = obj.optString("shortFormattedAddress", "");
+                double rating  = obj.optDouble("rating", 0.0);
 
-                JSONObject loc = obj.getJSONObject("geometry").getJSONObject("location");
-                double pLat = loc.getDouble("lat");
-                double pLng = loc.getDouble("lng");
+                // v1: location.latitude / location.longitude
+                JSONObject loc = obj.getJSONObject("location");
+                double pLat = loc.getDouble("latitude");
+                double pLng = loc.getDouble("longitude");
 
-                String photoRef = "";
+                // v1: photos[0].name is the resource name used for photo URL
+                String photoName = "";
                 if (obj.has("photos")) {
-                    photoRef = obj.getJSONArray("photos")
+                    photoName = obj.getJSONArray("photos")
                             .getJSONObject(0)
-                            .optString("photo_reference", "");
+                            .optString("name", "");
                 }
 
                 list.add(new NearbyPlace(name, address, pLat, pLng,
-                        rating, placeId, photoRef, category));
+                        rating, placeId, photoName, category));
             }
         } catch (Exception e) {
             e.printStackTrace();

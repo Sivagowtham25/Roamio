@@ -30,9 +30,27 @@
             android:windowSoftInputMode="adjustResize"
             android:exported="false" />
 
+        <activity
+            android:name=".activities.ItineraryActivity"
+            android:theme="@style/Theme.Roamio.Signup"
+            android:windowSoftInputMode="adjustResize"
+            android:exported="false" />
+
         <activity android:name=".activities.MyTripsActivity"
             android:theme="@style/Theme.Roamio.Signup"
             android:exported="false"/>
+
+        <activity
+            android:name=".activities.AiTripPlannerActivity"
+            android:theme="@style/Theme.Roamio.Signup"
+            android:windowSoftInputMode="adjustResize"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.CreateTripActivity"
+            android:theme="@style/Theme.Roamio.Signup"
+            android:windowSoftInputMode="adjustResize"
+            android:exported="false" />
 
         <!-- MAIN ACTIVITY -->
         <!--
@@ -75,6 +93,12 @@
         <activity
             android:name=".activities.NearbyActivity"
             android:theme="@style/Theme.Roamio.Home"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.ReviewActivity"
+            android:theme="@style/Theme.Roamio.Signup"
+            android:windowSoftInputMode="adjustResize"
             android:exported="false" />
 
     </application>

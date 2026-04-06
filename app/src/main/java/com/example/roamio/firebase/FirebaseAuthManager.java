@@ -1,23 +1,24 @@
 package com.example.roamio.firebase;
 
 import com.example.roamio.models.User;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.Timestamp;
+import com.google.firebase.auth.*;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * FirebaseAuthManager
- * Centralises all Firebase Authentication + Firestore operations for Roamio.
+ * Handles Authentication + Firestore user profile operations
  */
 public class FirebaseAuthManager {
 
-    private final FirebaseAuth      mAuth;
+    private final FirebaseAuth mAuth;
     private final FirebaseFirestore db;
 
-    // Collection name in Firestore
     private static final String USERS_COLLECTION = "users";
 
     public FirebaseAuthManager() {
@@ -25,54 +26,57 @@ public class FirebaseAuthManager {
         db    = FirebaseFirestore.getInstance();
     }
 
-    // ── Callback Interface ────────────────────────────────────────────────────
+    // ── Auth Callback ─────────────────────────────────────────────
     public interface AuthCallback {
         void onSuccess(String uid);
         void onFailure(String errorMessage);
     }
 
-    // ── Sign Up ───────────────────────────────────────────────────────────────
-    /**
-     * Creates a Firebase Auth user then saves the full User profile to Firestore.
-     * @param email    User's email address
-     * @param password User's chosen password
-     * @param user     Populated User model (name, age, jobType, tripPreferences, recommendations)
-     * @param callback Success delivers UID; failure delivers error message
-     */
+    // ── Profile Callback ──────────────────────────────────────────
+    public interface ProfileCallback {
+        void onSuccess(User user);
+        void onFailure(String errorMessage);
+    }
+
+    // ── SIGN UP ───────────────────────────────────────────────────
     public void signUp(String email, String password, User user, AuthCallback callback) {
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnSuccessListener(authResult -> {
                     FirebaseUser firebaseUser = authResult.getUser();
+
                     if (firebaseUser == null) {
-                        callback.onFailure("Authentication failed: no user returned.");
+                        callback.onFailure("Authentication failed.");
                         return;
                     }
+
                     String uid = firebaseUser.getUid();
+
+                    // Save full profile
                     saveUserProfile(uid, user, callback);
                 })
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
 
-    // ── Sign In ───────────────────────────────────────────────────────────────
+    // ── SIGN IN ───────────────────────────────────────────────────
     public void signIn(String email, String password, AuthCallback callback) {
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnSuccessListener(authResult -> {
                     FirebaseUser firebaseUser = authResult.getUser();
+
                     if (firebaseUser != null) {
                         callback.onSuccess(firebaseUser.getUid());
                     } else {
-                        callback.onFailure("Login failed: no user found.");
+                        callback.onFailure("Login failed.");
                     }
                 })
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
 
-    // ── Sign Out ──────────────────────────────────────────────────────────────
+    // ── SIGN OUT ──────────────────────────────────────────────────
     public void signOut() {
         mAuth.signOut();
     }
 
-    // ── Get Current User ──────────────────────────────────────────────────────
     public FirebaseUser getCurrentUser() {
         return mAuth.getCurrentUser();
     }
@@ -81,8 +85,9 @@ public class FirebaseAuthManager {
         return mAuth.getCurrentUser() != null;
     }
 
-    // ── Save User Profile to Firestore ────────────────────────────────────────
+    // ── SAVE USER PROFILE (SAFE - MERGE) ──────────────────────────
     private void saveUserProfile(String uid, User user, AuthCallback callback) {
+
         Map<String, Object> data = new HashMap<>();
         data.put("name",              user.getName());
         data.put("email",             user.getEmail());
@@ -90,33 +95,108 @@ public class FirebaseAuthManager {
         data.put("jobType",           user.getJobType());
         data.put("tripPreferences",   user.getTripPreferences());
         data.put("aiRecommendations", user.getAiRecommendations());
-        data.put("createdAt",         com.google.firebase.Timestamp.now());
+        data.put("createdAt",         Timestamp.now());
 
+        // 🔥 IMPORTANT: merge prevents overwriting existing data
         db.collection(USERS_COLLECTION)
                 .document(uid)
-                .set(data)
+                .set(data, SetOptions.merge())
                 .addOnSuccessListener(unused -> callback.onSuccess(uid))
-                .addOnFailureListener(e -> callback.onFailure("Profile save failed: " + e.getMessage()));
+                .addOnFailureListener(e ->
+                        callback.onFailure("Profile save failed: " + e.getMessage()));
     }
 
-    // ── Fetch User Profile from Firestore ─────────────────────────────────────
-    public interface ProfileCallback {
-        void onSuccess(User user);
-        void onFailure(String errorMessage);
-    }
-
+    // ── FETCH USER PROFILE (SAFE + NO OVERWRITE) ──────────────────
     public void fetchUserProfile(String uid, ProfileCallback callback) {
+
         db.collection(USERS_COLLECTION)
                 .document(uid)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
+
                     if (documentSnapshot.exists()) {
+
                         User user = documentSnapshot.toObject(User.class);
+
+                        if (user == null) {
+                            callback.onFailure("User data corrupted.");
+                            return;
+                        }
+
+                        // 🔥 Fill missing fields safely
+                        if (user.getName() == null) user.setName("Traveller");
+                        if (user.getEmail() == null) user.setEmail("");
+                        if (user.getJobType() == null) user.setJobType("Not specified");
+                        if (user.getTripPreferences() == null)
+                            user.setTripPreferences(new ArrayList<>());
+                        if (user.getAiRecommendations() == null)
+                            user.setAiRecommendations(new ArrayList<>());
+
                         callback.onSuccess(user);
-                    } else {
-                        callback.onFailure("User profile not found.");
+                        return;
                     }
+
+                    // ❗ DO NOT overwrite DB — just fallback locally
+                    FirebaseUser firebaseUser = mAuth.getCurrentUser();
+
+                    if (firebaseUser != null) {
+                        User fallbackUser = new User();
+
+                        fallbackUser.setName("Traveller");
+                        fallbackUser.setEmail(firebaseUser.getEmail());
+                        fallbackUser.setAge(0);
+                        fallbackUser.setJobType("Not specified");
+                        fallbackUser.setTripPreferences(new ArrayList<>());
+                        fallbackUser.setAiRecommendations(new ArrayList<>());
+
+                        callback.onSuccess(fallbackUser);
+                    } else {
+                        callback.onFailure("User not authenticated.");
+                    }
+
                 })
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
+    // ── DELETE ACCOUNT (WITH PASSWORD RE-AUTH) ────────────────────
+    public void deleteAccountWithPassword(String password, AuthCallback callback) {
+
+        FirebaseUser user = mAuth.getCurrentUser();
+
+        if (user == null || user.getEmail() == null) {
+            callback.onFailure("User not authenticated.");
+            return;
+        }
+
+        String email = user.getEmail();
+        String uid   = user.getUid();
+
+        AuthCredential credential =
+                EmailAuthProvider.getCredential(email, password);
+
+        // 🔐 Re-authenticate first
+        user.reauthenticate(credential)
+                .addOnSuccessListener(unused -> {
+
+                    // Delete Firestore profile
+                    db.collection(USERS_COLLECTION)
+                            .document(uid)
+                            .delete()
+                            .addOnSuccessListener(unused1 -> {
+
+                                // Delete Auth user
+                                user.delete()
+                                        .addOnSuccessListener(aVoid ->
+                                                callback.onSuccess(uid))
+                                        .addOnFailureListener(e ->
+                                                callback.onFailure(e.getMessage()));
+
+                            })
+                            .addOnFailureListener(e ->
+                                    callback.onFailure(e.getMessage()));
+
+                })
+                .addOnFailureListener(e ->
+                        callback.onFailure("Re-authentication failed: " + e.getMessage()));
     }
 }

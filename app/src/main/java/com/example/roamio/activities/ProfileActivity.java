@@ -11,6 +11,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import android.app.AlertDialog;
+import android.widget.EditText;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.core.view.WindowCompat;
@@ -24,12 +27,13 @@ import com.google.firebase.auth.FirebaseUser;
 public class ProfileActivity extends AppCompatActivity {
 
     // ── Views ─────────────────────────────────────────────────────────────────
-    private TextView        tvUserInitial, tvUserName, tvUserEmail;
-    private TextView        tvAge, tvJobType;
-    private LinearLayout    llTripPreferences, llAiRecommendations;
-    private CardView        cardProfile, cardTrips, cardAI;
-    private MaterialButton  btnLogout;
-    private View            loadingView;
+    private TextView       tvUserInitial, tvUserName, tvUserEmail;
+    private TextView       tvAge, tvJobType;
+    private LinearLayout   llTripPreferences;
+    private CardView       cardProfile, cardTrips;
+    private MaterialButton btnLogout;
+    private View           loadingView;
+    private MaterialButton btnDeleteAccount;
 
     // ── Firebase ──────────────────────────────────────────────────────────────
     private FirebaseAuthManager authManager;
@@ -55,18 +59,17 @@ public class ProfileActivity extends AppCompatActivity {
 
     // ── Bind Views ────────────────────────────────────────────────────────────
     private void bindViews() {
-        tvUserInitial        = findViewById(R.id.tvUserInitial);
-        tvUserName           = findViewById(R.id.tvUserName);
-        tvUserEmail          = findViewById(R.id.tvUserEmail);
-        tvAge                = findViewById(R.id.tvAge);
-        tvJobType            = findViewById(R.id.tvJobType);
-        llTripPreferences    = findViewById(R.id.llTripPreferences);
-        llAiRecommendations  = findViewById(R.id.llAiRecommendations);
-        cardProfile          = findViewById(R.id.cardProfile);
-        cardTrips            = findViewById(R.id.cardTrips);
-        cardAI               = findViewById(R.id.cardAI);
-        btnLogout            = findViewById(R.id.btnLogout);
-        loadingView          = findViewById(R.id.loadingView);
+        tvUserInitial     = findViewById(R.id.tvUserInitial);
+        tvUserName        = findViewById(R.id.tvUserName);
+        tvUserEmail       = findViewById(R.id.tvUserEmail);
+        tvAge             = findViewById(R.id.tvAge);
+        tvJobType         = findViewById(R.id.tvJobType);
+        llTripPreferences = findViewById(R.id.llTripPreferences);
+        cardProfile       = findViewById(R.id.cardProfile);
+        cardTrips         = findViewById(R.id.cardTrips);
+        btnLogout         = findViewById(R.id.btnLogout);
+        loadingView       = findViewById(R.id.loadingView);
+        btnDeleteAccount  = findViewById(R.id.btnDeleteAccount);
     }
 
     // ── Load Profile from Firestore ───────────────────────────────────────────
@@ -102,7 +105,6 @@ public class ProfileActivity extends AppCompatActivity {
 
     // ── Populate UI with User data ────────────────────────────────────────────
     private void populateUI(User user) {
-        // Avatar initial
         if (user.getName() != null && !user.getName().isEmpty()) {
             tvUserInitial.setText(String.valueOf(user.getName().charAt(0)).toUpperCase());
             tvUserName.setText(user.getName());
@@ -112,7 +114,6 @@ public class ProfileActivity extends AppCompatActivity {
         tvAge.setText(user.getAge() > 0 ? user.getAge() + " years" : "—");
         tvJobType.setText(user.getJobType() != null ? user.getJobType() : "—");
 
-        // Trip preferences chips
         llTripPreferences.removeAllViews();
         if (user.getTripPreferences() != null && !user.getTripPreferences().isEmpty()) {
             for (String pref : user.getTripPreferences()) {
@@ -120,16 +121,6 @@ public class ProfileActivity extends AppCompatActivity {
             }
         } else {
             llTripPreferences.addView(makeEmptyText("No preferences set"));
-        }
-
-        // AI recommendations
-        llAiRecommendations.removeAllViews();
-        if (user.getAiRecommendations() != null && !user.getAiRecommendations().isEmpty()) {
-            for (int i = 0; i < user.getAiRecommendations().size(); i++) {
-                llAiRecommendations.addView(makeRecommendationRow(i + 1, user.getAiRecommendations().get(i)));
-            }
-        } else {
-            llAiRecommendations.addView(makeEmptyText("No recommendations yet"));
         }
     }
 
@@ -149,21 +140,6 @@ public class ProfileActivity extends AppCompatActivity {
         return chip;
     }
 
-    // ── Row view for AI recommendations ──────────────────────────────────────
-    private TextView makeRecommendationRow(int index, String text) {
-        TextView tv = new TextView(this);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.setMargins(0, 0, 0, 12);
-        tv.setLayoutParams(params);
-        tv.setText(index + ".  " + text);
-        tv.setTextColor(Color.parseColor("#EEF2FF"));
-        tv.setTextSize(14f);
-        tv.setLineSpacing(4f, 1f);
-        return tv;
-    }
-
     // ── Empty state text ──────────────────────────────────────────────────────
     private TextView makeEmptyText(String message) {
         TextView tv = new TextView(this);
@@ -176,6 +152,7 @@ public class ProfileActivity extends AppCompatActivity {
     // ── Click Listeners ───────────────────────────────────────────────────────
     private void setupClickListeners() {
         btnLogout.setOnClickListener(v -> navigateToLogin());
+        btnDeleteAccount.setOnClickListener(v -> showDeleteDialog());
     }
 
     // ── Loading ───────────────────────────────────────────────────────────────
@@ -183,13 +160,13 @@ public class ProfileActivity extends AppCompatActivity {
         loadingView.setVisibility(visible ? View.VISIBLE : View.GONE);
         cardProfile.setVisibility(visible ? View.GONE : View.VISIBLE);
         cardTrips.setVisibility(visible ? View.GONE : View.VISIBLE);
-        cardAI.setVisibility(visible ? View.GONE : View.VISIBLE);
         btnLogout.setVisibility(visible ? View.GONE : View.VISIBLE);
+        btnDeleteAccount.setVisibility(visible ? View.GONE : View.VISIBLE);
     }
 
     // ── Entry Animation ───────────────────────────────────────────────────────
     private void playEntryAnimation() {
-        View[] cards = {cardProfile, cardTrips, cardAI, btnLogout};
+        View[] cards = {cardProfile, cardTrips, btnLogout};
         for (int i = 0; i < cards.length; i++) {
             cards[i].setAlpha(0f);
             cards[i].setTranslationY(50f);
@@ -207,12 +184,56 @@ public class ProfileActivity extends AppCompatActivity {
 
     // ── Navigation ────────────────────────────────────────────────────────────
     private void navigateToLogin() {
-        sessionManager.clearSession();   // ✅ clear 30-day session on logout
-        authManager.signOut();           // ✅ ensure Firebase is also signed out
+        sessionManager.clearSession();
+        authManager.signOut();
         Intent intent = new Intent(this, LoginActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
         finish();
+    }
+
+    private void showDeleteDialog() {
+        EditText passwordInput = new EditText(this);
+        passwordInput.setHint("Enter your password");
+        passwordInput.setInputType(
+                android.text.InputType.TYPE_CLASS_TEXT |
+                        android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Delete Account")
+                .setMessage("Enter your password to confirm deletion")
+                .setView(passwordInput)
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    String password = passwordInput.getText().toString().trim();
+                    if (password.isEmpty()) {
+                        Toast.makeText(this, "Password required", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    btnDeleteAccount.setEnabled(false);
+                    authManager.deleteAccountWithPassword(password,
+                            new FirebaseAuthManager.AuthCallback() {
+                                @Override
+                                public void onSuccess(String uid) {
+                                    runOnUiThread(() -> {
+                                        sessionManager.clearSession();
+                                        Toast.makeText(ProfileActivity.this,
+                                                "Account deleted", Toast.LENGTH_SHORT).show();
+                                        navigateToLogin();
+                                    });
+                                }
+
+                                @Override
+                                public void onFailure(String errorMessage) {
+                                    runOnUiThread(() -> {
+                                        btnDeleteAccount.setEnabled(true);
+                                        Toast.makeText(ProfileActivity.this,
+                                                errorMessage, Toast.LENGTH_LONG).show();
+                                    });
+                                }
+                            });
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 }

@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -21,11 +22,10 @@ import java.util.List;
 
 public class NearbyPlaceAdapter extends RecyclerView.Adapter<NearbyPlaceAdapter.ViewHolder> {
 
-    private final Context          context;
+    private final Context           context;
     private final List<NearbyPlace> places;
     private       OnPlaceClickListener listener;
 
-    // ── Interface for click callbacks ─────────────────────────────────────────
     public interface OnPlaceClickListener {
         void onPlaceClick(NearbyPlace place);
         void onFavouriteClick(NearbyPlace place, int position);
@@ -54,20 +54,24 @@ public class NearbyPlaceAdapter extends RecyclerView.Adapter<NearbyPlaceAdapter.
 
         holder.tvPlaceName.setText(place.getName());
 
-        // Show rating if available
+        // Show the whole chip container only when a rating exists
         if (place.getRating() > 0) {
-            holder.tvRating.setText(String.format("%.1f", place.getRating()));
-            holder.tvRating.setVisibility(View.VISIBLE);
+            holder.tvRating.setText(String.format("★ %.1f", place.getRating()));
+            holder.ratingChip.setVisibility(View.VISIBLE);
         } else {
-            holder.tvRating.setVisibility(View.GONE);
+            holder.ratingChip.setVisibility(View.GONE);
         }
 
-        // Load image from Google Places Photo API
+        // Load image from Google Places Photo API v1
+        // place.getPhotoReference() now holds the resource name, e.g.:
+        //   "places/ChIJ.../photos/AXCi2y..."
+        // The v1 photo URL format:
+        //   https://places.googleapis.com/v1/{name}/media?key=KEY&maxWidthPx=400
         if (place.hasPhoto()) {
-            String photoUrl = "https://maps.googleapis.com/maps/api/place/photo"
-                    + "?maxwidth=400"
-                    + "&photo_reference=" + place.getPhotoReference()
-                    + "&key=" + BuildConfig.MAPS_API_KEY;
+            String photoUrl = "https://places.googleapis.com/v1/"
+                    + place.getPhotoReference()
+                    + "/media?key=" + BuildConfig.MAPS_API_KEY
+                    + "&maxWidthPx=400";
 
             Glide.with(context)
                     .load(photoUrl)
@@ -75,7 +79,6 @@ public class NearbyPlaceAdapter extends RecyclerView.Adapter<NearbyPlaceAdapter.
                     .centerCrop()
                     .into(holder.ivPlaceImage);
         } else {
-            // Placeholder with a category color
             holder.ivPlaceImage.setBackgroundColor(getCategoryColor(place.getCategory()));
             holder.ivPlaceImage.setImageDrawable(null);
         }
@@ -100,25 +103,25 @@ public class NearbyPlaceAdapter extends RecyclerView.Adapter<NearbyPlaceAdapter.
     @Override
     public int getItemCount() { return places.size(); }
 
-    // ── ViewHolder ────────────────────────────────────────────────────────────
     static class ViewHolder extends RecyclerView.ViewHolder {
-        ImageView ivPlaceImage;
-        TextView  tvPlaceName;
-        TextView  tvRating;
-        View      btnFavourite;
-        ImageView ivHeart;
+        ImageView    ivPlaceImage;
+        TextView     tvPlaceName;
+        TextView     tvRating;
+        LinearLayout ratingChip;   // chip container — hide this, not just the text
+        View         btnFavourite;
+        ImageView    ivHeart;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
             ivPlaceImage = itemView.findViewById(R.id.ivPlaceImage);
             tvPlaceName  = itemView.findViewById(R.id.tvPlaceName);
             tvRating     = itemView.findViewById(R.id.tvRating);
+            ratingChip   = itemView.findViewById(R.id.ratingChip);
             btnFavourite = itemView.findViewById(R.id.btnFavourite);
             ivHeart      = itemView.findViewById(R.id.ivHeart);
         }
     }
 
-    // ── Category background color fallback ───────────────────────────────────
     private int getCategoryColor(String category) {
         if (category == null) return Color.parseColor("#1A2533");
         switch (category) {
