@@ -4,12 +4,15 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.graphics.Color;
+import android.graphics.Typeface;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.WindowCompat;
 
@@ -24,6 +27,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -37,7 +41,7 @@ import java.util.Locale;
 public class LiveTripActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private String tripId, destination, tripName, startDate, endDate;
-    private TextView tvTripHeader, tvDayLabel, tvHotelLink;
+    private TextView tvDayLabel, tvHotelLink;
     private LinearLayout llActivities;
     private GoogleMap gMap;
     private FirebaseFirestore db;
@@ -92,7 +96,7 @@ public class LiveTripActivity extends AppCompatActivity implements OnMapReadyCal
     }
 
     private void bindViews() {
-        tvTripHeader = findViewById(R.id.tvTripHeader);
+        TextView tvTripHeader = findViewById(R.id.tvTripHeader);
         tvDayLabel = findViewById(R.id.tvDayLabel);
         tvHotelLink = findViewById(R.id.tvHotelLink);
         llActivities = findViewById(R.id.llActivities);
@@ -188,14 +192,15 @@ public class LiveTripActivity extends AppCompatActivity implements OnMapReadyCal
 
     private void openDirections(String placeName) {
         String query = destination != null ? placeName + " " + destination : placeName;
-        Intent i = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("geo:0,0?q=" + android.net.Uri.encode(query)));
+        Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q=" + Uri.encode(query)));
         i.setPackage("com.google.android.apps.maps");
         try { startActivity(i); } catch (Exception e) { Toast.makeText(this, "Maps not available", Toast.LENGTH_SHORT).show(); }
     }
 
     private void openHotel() {
-        String url = (hotelLink != null && !hotelLink.isEmpty()) ? hotelLink : Constants.BOOKING_BASE + (destination != null ? destination.replace(" ", "%20") : "");
-        try { startActivity(new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url))); } catch (Exception e) {}
+        String query = destination != null ? destination.replace(" ", "%20") : "";
+        String url = (hotelLink != null && !hotelLink.isEmpty()) ? hotelLink : Constants.BOOKING_BASE + query;
+        try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url))); } catch (Exception e) {}
     }
 
     private void updateHotelButton() {
@@ -204,9 +209,9 @@ public class LiveTripActivity extends AppCompatActivity implements OnMapReadyCal
         tvHotelLink.setTextColor(Color.parseColor(hasLink ? "#00C9B1" : "#F4B942"));
     }
 
-    @Override public void onMapReady(GoogleMap map) {
+    @Override public void onMapReady(@NonNull GoogleMap map) {
         gMap = map;
-        gMap.setMapStyle(com.google.android.gms.maps.model.MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style_dark));
+        gMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style_dark));
         if (destLatLng != null) focusMap(destLatLng);
     }
 

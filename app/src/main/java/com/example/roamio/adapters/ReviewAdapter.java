@@ -99,11 +99,11 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ViewHolder
     @Override
     public int getItemCount() { return reviews.size(); }
 
-    static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView    tvAvatar, tvName, tvTime, tvPlace, tvReviewText;
-        LinearLayout llStars;
+    public static class ViewHolder extends RecyclerView.ViewHolder {
+        public TextView    tvAvatar, tvName, tvTime, tvPlace, tvReviewText;
+        public LinearLayout llStars;
 
-        ViewHolder(@NonNull View v) {
+        public ViewHolder(@NonNull View v) {
             super(v);
             tvAvatar     = v.findViewById(R.id.tvReviewAvatar);
             tvName       = v.findViewById(R.id.tvReviewerName);

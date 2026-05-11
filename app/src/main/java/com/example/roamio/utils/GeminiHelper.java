@@ -1,7 +1,6 @@
 package com.example.roamio.utils;
 
 import com.example.roamio.BuildConfig;
-import com.example.roamio.utils.Constants;
 
 import org.json.JSONArray;
 import org.json.JSONObject;

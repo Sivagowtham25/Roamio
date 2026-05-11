@@ -1,7 +1,6 @@
 package com.example.roamio.utils;
 
 public class Constants {
-    // Intent Extra Keys
     public static final String EXTRA_TRIP_ID      = "tripId";
     public static final String EXTRA_DESTINATION  = "destination";
     public static final String EXTRA_TRIP_NAME    = "tripName";
@@ -14,14 +13,12 @@ public class Constants {
     public static final String EXTRA_DEST_LNG     = "extra_dest_lng";
     public static final String EXTRA_PROMPT       = "extra_prompt";
 
-    // Firestore Collections
     public static final String COL_USERS          = "users";
     public static final String COL_TRIPS          = "trips";
     public static final String COL_ITINERARY      = "itinerary";
     public static final String COL_REVIEWS        = "reviews";
     public static final String DOC_PLAN           = "plan";
 
-    // API & External URLs
     public static final String BOOKING_BASE       = "https://www.booking.com/searchresults.html?ss=";
     public static final String GEMINI_BASE_URL    = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=";
 }

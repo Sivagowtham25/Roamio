@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.example.roamio">
 
-    <!-- ✅ Permissions required for Maps + Location + Places API -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 
     <application
         android:allowBackup="true"
-        android:name=".RoamioApp"
+        android:name="com.example.roamio.RoamioApp"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
@@ -19,89 +19,77 @@
         android:theme="@style/Theme.Roamio">
 
         <activity
-            android:name=".activities.ProfileActivity"
+            android:name="com.example.roamio.activities.ProfileActivity"
             android:theme="@style/Theme.Roamio.Signup"
             android:windowSoftInputMode="adjustResize"
             android:exported="false" />
 
         <activity
-            android:name=".activities.TripActivity"
+            android:name="com.example.roamio.activities.TripActivity"
             android:theme="@style/Theme.Roamio.Signup"
             android:windowSoftInputMode="adjustResize"
             android:exported="false" />
 
         <activity
-            android:name=".activities.ItineraryActivity"
+            android:name="com.example.roamio.activities.ItineraryActivity"
             android:theme="@style/Theme.Roamio.Signup"
             android:windowSoftInputMode="adjustResize"
             android:exported="false" />
 
-        <activity android:name=".activities.MyTripsActivity"
+        <activity android:name="com.example.roamio.activities.MyTripsActivity"
             android:theme="@style/Theme.Roamio.Signup"
             android:exported="false"/>
 
         <activity
-            android:name=".activities.AiTripPlannerActivity"
+            android:name="com.example.roamio.activities.AiTripPlannerActivity"
             android:theme="@style/Theme.Roamio.Signup"
             android:windowSoftInputMode="adjustResize"
             android:exported="false" />
 
         <activity
-            android:name=".activities.CreateTripActivity"
+            android:name="com.example.roamio.activities.CreateTripActivity"
             android:theme="@style/Theme.Roamio.Signup"
             android:windowSoftInputMode="adjustResize"
             android:exported="false" />
 
-        <!-- MAIN ACTIVITY -->
-        <!--
-            ✅ Google Maps API Key
-            Value is injected from local.properties via build.gradle.kts.
-            Never hard-code your key here — keep it in local.properties.
-        -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${mapsApiKey}"/>
 
-        <!-- MAIN / HOME ACTIVITY — session check inside redirects to Login if needed -->
         <activity
-            android:name=".MainActivity"
+            android:name="com.example.roamio.MainActivity"
             android:theme="@style/Theme.Roamio.Home"
             android:exported="true">
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
         </activity>
 
-        <!-- LOGIN ACTIVITY -->
         <activity
-            android:name=".activities.LoginActivity"
+            android:name="com.example.roamio.activities.LoginActivity"
             android:theme="@style/Theme.Roamio.Signup"
             android:windowSoftInputMode="adjustResize"
             android:exported="false" />
 
-        <!-- SIGNUP ACTIVITY -->
         <activity
-            android:name=".activities.SignupActivity"
+            android:name="com.example.roamio.activities.SignupActivity"
             android:theme="@style/Theme.Roamio.Signup"
             android:windowSoftInputMode="adjustResize"
             android:exported="false" />
 
-        <!-- ✅ NEARBY ACTIVITY -->
         <activity
-            android:name=".activities.NearbyActivity"
+            android:name="com.example.roamio.activities.NearbyActivity"
             android:theme="@style/Theme.Roamio.Home"
             android:exported="false" />
 
         <activity
-            android:name=".activities.MapActivity"
+            android:name="com.example.roamio.activities.MapActivity"
             android:theme="@style/Theme.Roamio.Home"
             android:exported="false" />
 
         <activity
-            android:name=".activities.ReviewActivity"
+            android:name="com.example.roamio.activities.ReviewActivity"
             android:theme="@style/Theme.Roamio.Signup"
             android:windowSoftInputMode="adjustResize"
             android:exported="false" />
