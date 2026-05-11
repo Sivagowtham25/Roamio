@@ -11,10 +11,11 @@ import android.content.SharedPreferences;
  */
 public class SessionManager {
 
-    private static final String PREF_NAME          = "RoamioSession";
-    private static final String KEY_LOGIN_TIMESTAMP = "login_timestamp";
-    private static final String KEY_USER_UID        = "user_uid";
-    private static final String KEY_USER_NAME       = "user_name";
+    private static final String PREF_NAME           = "RoamioSession";
+    private static final String KEY_LOGIN_TIMESTAMP  = "login_timestamp";
+    private static final String KEY_USER_UID         = "user_uid";
+    private static final String KEY_USER_NAME        = "user_name";
+    private static final String KEY_ACTIVE_TRIP_ID   = "active_trip_id";
 
     /** 30 days in milliseconds */
     public static final long SESSION_DURATION_MS = 30L * 24L * 60L * 60L * 1000L;
@@ -41,13 +42,21 @@ public class SessionManager {
         return (System.currentTimeMillis() - loginTime) < SESSION_DURATION_MS;
     }
 
-    // ── Getters ───────────────────────────────────────────────────────────────
+    // ── Getters / Setters ─────────────────────────────────────────────────────
     public String getSavedUid() {
         return prefs.getString(KEY_USER_UID, null);
     }
 
     public String getSavedName() {
         return prefs.getString(KEY_USER_NAME, "Traveller");
+    }
+
+    public void setActiveTripId(String tripId) {
+        prefs.edit().putString(KEY_ACTIVE_TRIP_ID, tripId).apply();
+    }
+
+    public String getActiveTripId() {
+        return prefs.getString(KEY_ACTIVE_TRIP_ID, null);
     }
 
     // ── Clear on logout ───────────────────────────────────────────────────────

@@ -22,6 +22,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
+import java.util.List;
+
 public class MyTripsActivity extends AppCompatActivity {
 
     private LinearLayout llTrips;
@@ -50,9 +52,6 @@ public class MyTripsActivity extends AppCompatActivity {
             startActivity(new Intent(this, TripActivity.class));
             overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         });
-
-        // loadTrips() is called in onResume() which always fires after onCreate,
-        // so we do NOT call it here — avoids a double async load that causes duplicates.
     }
 
     @Override
@@ -97,18 +96,19 @@ public class MyTripsActivity extends AppCompatActivity {
                         String travellers  = doc.getString("travellers");
                         String budget      = doc.getString("budget");
                         String notes       = doc.getString("notes");
-                        // keywords is stored as a List<String>, not a plain String
-                        String keywords;
-                        try {
-                            java.util.List<String> kwList = (java.util.List<String>) doc.get("keywords");
-                            keywords = (kwList != null && !kwList.isEmpty())
-                                    ? android.text.TextUtils.join(", ", kwList)
-                                    : null;
-                        } catch (Exception ignored) {
-                            keywords = doc.getString("keywords"); // fallback for old docs
+                        
+                        String keywords = null;
+                        Object kwObj = doc.get("keywords");
+                        if (kwObj instanceof List) {
+                            @SuppressWarnings("unchecked")
+                            List<String> kwList = (List<String>) kwObj;
+                            if (kwList != null && !kwList.isEmpty()) {
+                                keywords = android.text.TextUtils.join(", ", kwList);
+                            }
+                        } else if (kwObj instanceof String) {
+                            keywords = (String) kwObj;
                         }
 
-                        // Build card (initially shows "Create Itinerary")
                         View card = buildTripCard(destination, tripName, startDate,
                                 endDate, travellers, budget, notes, keywords, docId, uid);
 
@@ -116,7 +116,6 @@ public class MyTripsActivity extends AppCompatActivity {
                         animateCard(card, delay);
                         delay += 80;
 
-                        // Check whether itinerary already exists — update badge async
                         checkItineraryExists(docId, uid, card);
                     }
                 })
@@ -127,7 +126,6 @@ public class MyTripsActivity extends AppCompatActivity {
                 });
     }
 
-    // ── Check if itinerary exists and update the CTA button label ────────────
     private void checkItineraryExists(String docId, String uid, View card) {
         db.collection("users").document(uid)
                 .collection("trips").document(docId)
@@ -147,40 +145,31 @@ public class MyTripsActivity extends AppCompatActivity {
                 });
     }
 
-    // ── Build a trip card dynamically ─────────────────────────────────────────
     private View buildTripCard(String destination, String tripName,
                                String startDate, String endDate,
                                String travellers, String budget,
                                String notes, String keywords,
                                String docId, String uid) {
 
-        // Outer card
         CardView card = new CardView(this);
-        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(-1, -2);
         cardParams.bottomMargin = dp(14);
         card.setLayoutParams(cardParams);
         card.setRadius(dp(20));
         card.setCardElevation(dp(8));
         card.setCardBackgroundColor(Color.parseColor("#14FFFFFF"));
 
-        // Inner layout
         LinearLayout inner = new LinearLayout(this);
         inner.setOrientation(LinearLayout.VERTICAL);
         inner.setPadding(dp(20), dp(18), dp(20), dp(18));
 
-        // ── Destination header row ────────────────────────────────────────────
         LinearLayout headerRow = new LinearLayout(this);
         headerRow.setOrientation(LinearLayout.HORIZONTAL);
         headerRow.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        LinearLayout.LayoutParams hrp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
+        LinearLayout.LayoutParams hrp = new LinearLayout.LayoutParams(-1, -2);
         hrp.bottomMargin = dp(10);
         headerRow.setLayoutParams(hrp);
 
-        // Destination emoji circle
         TextView tvEmoji = new TextView(this);
         tvEmoji.setText(getDestinationEmoji(destination));
         tvEmoji.setTextSize(22f);
@@ -190,11 +179,9 @@ public class MyTripsActivity extends AppCompatActivity {
         ep.setMarginEnd(dp(12));
         tvEmoji.setLayoutParams(ep);
 
-        // Trip name + destination
         LinearLayout nameCol = new LinearLayout(this);
         nameCol.setOrientation(LinearLayout.VERTICAL);
-        nameCol.setLayoutParams(new LinearLayout.LayoutParams(0,
-                LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        nameCol.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1f));
 
         TextView tvName = new TextView(this);
         tvName.setText(tripName != null ? tripName : "My Trip");
@@ -206,212 +193,69 @@ public class MyTripsActivity extends AppCompatActivity {
         tvDest.setText("📍  " + (destination != null ? destination : "—"));
         tvDest.setTextColor(Color.parseColor("#00C9B1"));
         tvDest.setTextSize(13f);
-        LinearLayout.LayoutParams destLp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        destLp.topMargin = dp(3);
-        tvDest.setLayoutParams(destLp);
-
         nameCol.addView(tvName);
         nameCol.addView(tvDest);
         headerRow.addView(tvEmoji);
         headerRow.addView(nameCol);
 
-        // Delete button
         TextView btnDelete = new TextView(this);
         btnDelete.setText("🗑");
         btnDelete.setTextSize(18f);
         btnDelete.setPadding(dp(8), dp(4), dp(4), dp(4));
-        btnDelete.setClickable(true);
-        btnDelete.setFocusable(true);
         btnDelete.setOnClickListener(v -> deleteTrip(docId, uid, card));
         headerRow.addView(btnDelete);
 
         inner.addView(headerRow);
 
-        // ── Divider ───────────────────────────────────────────────────────────
         View divider = new View(this);
-        LinearLayout.LayoutParams dvp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, dp(1));
-        dvp.bottomMargin = dp(12);
-        divider.setLayoutParams(dvp);
+        divider.setLayoutParams(new LinearLayout.LayoutParams(-1, dp(1)));
         divider.setBackgroundColor(Color.parseColor("#1AFFFFFF"));
         inner.addView(divider);
 
-        // ── Info grid ─────────────────────────────────────────────────────────
-        LinearLayout infoRow1 = buildInfoRow(
-                "📅  " + (startDate != null ? startDate : "—") + "  →  " + (endDate != null ? endDate : "—"),
-                "👥  " + (travellers != null ? travellers + " traveller(s)" : "—"));
-        inner.addView(infoRow1);
+        inner.addView(buildInfoRow("📅 " + (startDate != null ? startDate : "—") + " → " + (endDate != null ? endDate : "—"), "👥 " + (travellers != null ? travellers : "—")));
+        if (budget != null) inner.addView(buildInfoRow("💰 ₹" + budget, ""));
 
-        if (budget != null && !budget.isEmpty()) {
-            LinearLayout infoRow2 = buildInfoRow("💰  ₹" + budget, "");
-            inner.addView(infoRow2);
-        }
-
-        // ── Notes ─────────────────────────────────────────────────────────────
-        if (notes != null && !notes.isEmpty()) {
-            TextView tvNotes = new TextView(this);
-            LinearLayout.LayoutParams np = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT);
-            np.topMargin = dp(4);
-            np.bottomMargin = dp(6);
-            tvNotes.setLayoutParams(np);
-            tvNotes.setText("🗒  " + notes);
-            tvNotes.setTextColor(Color.parseColor("#88AAC0CC"));
-            tvNotes.setTextSize(12f);
-            tvNotes.setMaxLines(2);
-            tvNotes.setEllipsize(android.text.TextUtils.TruncateAt.END);
-            inner.addView(tvNotes);
-        }
-
-        // ── Divider before CTA ────────────────────────────────────────────────
         View divider2 = new View(this);
-        LinearLayout.LayoutParams dv2p = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, dp(1));
-        dv2p.topMargin = dp(10);
-        dv2p.bottomMargin = dp(12);
-        divider2.setLayoutParams(dv2p);
+        divider2.setLayoutParams(new LinearLayout.LayoutParams(-1, dp(1)));
         divider2.setBackgroundColor(Color.parseColor("#1AFFFFFF"));
         inner.addView(divider2);
 
-        // ── Create / View Itinerary CTA ───────────────────────────────────────
         TextView btnItinerary = new TextView(this);
-        btnItinerary.setTag("btnItinerary");  // used by checkItineraryExists()
-        btnItinerary.setText("✦  Create Itinerary");  // default; async check updates it
-        btnItinerary.setTextColor(Color.parseColor("#88AAC0CC"));
-        btnItinerary.setTextSize(14f);
-        btnItinerary.setTypeface(null, Typeface.BOLD);
+        btnItinerary.setTag("btnItinerary");
+        btnItinerary.setText("✦  Itinerary");
+        btnItinerary.setTextColor(Color.parseColor("#00C9B1"));
         btnItinerary.setGravity(android.view.Gravity.CENTER);
         btnItinerary.setPadding(dp(12), dp(10), dp(12), dp(4));
-        btnItinerary.setClickable(true);
-        btnItinerary.setFocusable(true);
-
-        final String finalDestination = destination;
-        final String finalTripName    = tripName;
-        final String finalStartDate   = startDate;
-        final String finalEndDate     = endDate;
-        final String finalTravellers  = travellers;
-        final String finalBudget      = budget;
-        final String finalKeywords    = keywords != null ? keywords : (notes != null ? notes : "");
-
         btnItinerary.setOnClickListener(v -> {
             Intent intent = new Intent(this, ItineraryActivity.class);
-            intent.putExtra(ItineraryActivity.EXTRA_TRIP_ID,     docId);
-            intent.putExtra(ItineraryActivity.EXTRA_TRIP_NAME,   finalTripName);
-            intent.putExtra(ItineraryActivity.EXTRA_DESTINATION, finalDestination);
-            intent.putExtra(ItineraryActivity.EXTRA_START_DATE,  finalStartDate);
-            intent.putExtra(ItineraryActivity.EXTRA_END_DATE,    finalEndDate);
-            intent.putExtra(ItineraryActivity.EXTRA_TRAVELLERS,  finalTravellers);
-            intent.putExtra(ItineraryActivity.EXTRA_BUDGET,      finalBudget);
-            intent.putExtra(ItineraryActivity.EXTRA_KEYWORDS,    finalKeywords);
+            intent.putExtra(ItineraryActivity.EXTRA_TRIP_ID, docId);
+            intent.putExtra(ItineraryActivity.EXTRA_DESTINATION, destination);
             startActivity(intent);
-            overridePendingTransition(R.anim.slide_up, R.anim.fade_out);
         });
 
         inner.addView(btnItinerary);
-
         card.addView(inner);
         return card;
     }
 
     private LinearLayout buildInfoRow(String left, String right) {
         LinearLayout row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        rp.bottomMargin = dp(6);
-        row.setLayoutParams(rp);
-
-        TextView tvLeft = new TextView(this);
-        tvLeft.setLayoutParams(new LinearLayout.LayoutParams(0,
-                LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-        tvLeft.setText(left);
-        tvLeft.setTextColor(Color.parseColor("#AAC0CC"));
-        tvLeft.setTextSize(13f);
-
-        TextView tvRight = new TextView(this);
-        tvRight.setLayoutParams(new LinearLayout.LayoutParams(0,
-                LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-        tvRight.setText(right);
-        tvRight.setTextColor(Color.parseColor("#AAC0CC"));
-        tvRight.setTextSize(13f);
-
-        row.addView(tvLeft);
-        row.addView(tvRight);
+        row.setPadding(0, dp(6), 0, 0);
+        TextView tvL = new TextView(this); tvL.setText(left); tvL.setTextColor(Color.parseColor("#AAC0CC")); tvL.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1f));
+        TextView tvR = new TextView(this); tvR.setText(right); tvR.setTextColor(Color.parseColor("#AAC0CC")); tvR.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1f));
+        row.addView(tvL); row.addView(tvR);
         return row;
     }
 
-    // ── Delete trip ───────────────────────────────────────────────────────────
     private void deleteTrip(String docId, String uid, View card) {
-        new android.app.AlertDialog.Builder(this)
-                .setTitle("Delete Trip")
-                .setMessage("Are you sure you want to delete this trip?")
-                .setPositiveButton("Delete", (dialog, which) -> {
-                    db.collection("users").document(uid)
-                            .collection("trips").document(docId)
-                            .delete()
-                            .addOnSuccessListener(unused -> {
-                                llTrips.removeView(card);
-                                if (llTrips.getChildCount() == 0) {
-                                    tvEmpty.setVisibility(View.VISIBLE);
-                                }
-                                Toast.makeText(this, "Trip deleted", Toast.LENGTH_SHORT).show();
-                            })
-                            .addOnFailureListener(e ->
-                                    Toast.makeText(this, "Failed to delete", Toast.LENGTH_SHORT).show());
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+        db.collection("users").document(uid).collection("trips").document(docId).delete().addOnSuccessListener(u -> llTrips.removeView(card));
     }
 
-    // ── Animate card in ───────────────────────────────────────────────────────
-    private void animateCard(View card, int delayMs) {
-        card.setAlpha(0f);
-        card.setTranslationY(40f);
-        AnimatorSet set = new AnimatorSet();
-        set.playTogether(
-                ObjectAnimator.ofFloat(card, "alpha", 0f, 1f),
-                ObjectAnimator.ofFloat(card, "translationY", 40f, 0f)
-        );
-        set.setDuration(350);
-        set.setStartDelay(delayMs);
-        set.setInterpolator(new DecelerateInterpolator());
-        set.start();
+    private void animateCard(View card, int delay) {
+        card.setAlpha(0); card.setTranslationY(40);
+        card.animate().alpha(1).translationY(0).setDuration(300).setStartDelay(delay).start();
     }
 
-    // ── Emoji per destination ─────────────────────────────────────────────────
-    private String getDestinationEmoji(String dest) {
-        if (dest == null) return "✈️";
-        String d = dest.toLowerCase();
-        if (d.contains("goa"))            return "🏖️";
-        if (d.contains("kerala"))         return "🛥️";
-        if (d.contains("rajasthan") || d.contains("jaipur")) return "🏰";
-        if (d.contains("manali") || d.contains("shimla"))    return "🏔️";
-        if (d.contains("mumbai"))         return "🌃";
-        if (d.contains("delhi"))          return "🕌";
-        if (d.contains("varanasi"))       return "🕯️";
-        if (d.contains("pondicherry"))    return "🌊";
-        if (d.contains("chennai"))        return "🏖️";
-        if (d.contains("madurai"))        return "🛕";
-        if (d.contains("kumbakonam"))     return "🛕";
-        if (d.contains("mahabalipuram")) return "🏛️";
-        if (d.contains("srirangam"))      return "🛕";
-        if (d.contains("tenkasi"))        return "🌊";
-        if (d.contains("rameswaram"))     return "🛕";
-        if (d.contains("kanyakumari"))    return "🌅";
-        if (d.contains("thanjavur"))      return "🛕";
-        if (d.contains("ooty"))           return "🚂";
-        if (d.contains("kodaikanal"))     return "🌿";
-        if (d.contains("andaman"))        return "🐠";
-        if (d.contains("mysore"))         return "🏯";
-        if (d.contains("hampi"))          return "🏛️";
-        return "✈️";
-    }
-
-    private int dp(int val) {
-        return Math.round(val * getResources().getDisplayMetrics().density);
-    }
+    private String getDestinationEmoji(String dest) { return "✈️"; }
+    private int dp(int val) { return Math.round(val * getResources().getDisplayMetrics().density); }
 }
