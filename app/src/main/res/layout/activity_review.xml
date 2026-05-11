@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0A1628">
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingBottom="40dp"
+        android:clipToPadding="false">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="30dp"
+                android:layout_marginBottom="20dp">
+                <ImageView
+                    android:id="@+id/btnBack"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/ic_chevron_right"
+                    android:rotation="180"
+                    android:padding="8dp"
+                    android:background="@drawable/bg_explore_card"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:text="Reviews"
+                    android:textColor="#EEF2FF"
+                    android:textSize="20sp"
+                    android:textStyle="bold"/>
+            </RelativeLayout>
+
+            <!-- Summary Banner -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="20dp"
+                app:cardBackgroundColor="#14FFFFFF"
+                android:layout_marginBottom="20dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="20dp">
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:gravity="center">
+                        <TextView
+                            android:id="@+id/tvAvgRating"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="4.8"
+                            android:textColor="#EEF2FF"
+                            android:textSize="32sp"
+                            android:textStyle="bold"/>
+                        <LinearLayout
+                            android:id="@+id/llAvgStars"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"/>
+                        <TextView
+                            android:id="@+id/tvReviewCount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="124 reviews"
+                            android:textColor="#88AAC0CC"
+                            android:textSize="12sp"/>
+                    </LinearLayout>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginStart="20dp">
+                        <!-- Rating Bars (Simplified for one example) -->
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical">
+                            <TextView android:layout_width="15dp" android:layout_height="wrap_content" android:text="5" android:textColor="#AAC0CC" android:textSize="10sp"/>
+                            <View android:id="@+id/bar5" android:layout_width="0dp" android:layout_height="4dp" android:layout_weight="1" android:background="#00C9B1" android:layout_marginHorizontal="8dp"/>
+                            <TextView android:id="@+id/tvCount5" android:layout_width="20dp" android:layout_height="wrap_content" android:text="90" android:textColor="#AAC0CC" android:textSize="10sp"/>
+                        </LinearLayout>
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical"><TextView android:layout_width="15dp" android:layout_height="wrap_content" android:text="4" android:textColor="#AAC0CC" android:textSize="10sp"/><View android:id="@+id/bar4" android:layout_width="0dp" android:layout_height="4dp" android:layout_weight="1" android:background="#00C9B1" android:layout_marginHorizontal="8dp"/><TextView android:id="@+id/tvCount4" android:layout_width="20dp" android:layout_height="wrap_content" android:text="20" android:textColor="#AAC0CC" android:textSize="10sp"/></LinearLayout>
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical"><TextView android:layout_width="15dp" android:layout_height="wrap_content" android:text="3" android:textColor="#AAC0CC" android:textSize="10sp"/><View android:id="@+id/bar3" android:layout_width="0dp" android:layout_height="4dp" android:layout_weight="1" android:background="#00C9B1" android:layout_marginHorizontal="8dp"/><TextView android:id="@+id/tvCount3" android:layout_width="20dp" android:layout_height="wrap_content" android:text="10" android:textColor="#AAC0CC" android:textSize="10sp"/></LinearLayout>
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical"><TextView android:layout_width="15dp" android:layout_height="wrap_content" android:text="2" android:textColor="#AAC0CC" android:textSize="10sp"/><View android:id="@+id/bar2" android:layout_width="0dp" android:layout_height="4dp" android:layout_weight="1" android:background="#00C9B1" android:layout_marginHorizontal="8dp"/><TextView android:id="@+id/tvCount2" android:layout_width="20dp" android:layout_height="wrap_content" android:text="4" android:textColor="#AAC0CC" android:textSize="10sp"/></LinearLayout>
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical"><TextView android:layout_width="15dp" android:layout_height="wrap_content" android:text="1" android:textColor="#AAC0CC" android:textSize="10sp"/><View android:id="@+id/bar1" android:layout_width="0dp" android:layout_height="4dp" android:layout_weight="1" android:background="#00C9B1" android:layout_marginHorizontal="8dp"/><TextView android:id="@+id/tvCount1" android:layout_width="20dp" android:layout_height="wrap_content" android:text="0" android:textColor="#AAC0CC" android:textSize="10sp"/></LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Write Review Card -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardWriteReview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="20dp"
+                app:cardBackgroundColor="#14FFFFFF"
+                android:layout_marginBottom="20dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Write a Review" android:textColor="#00C9B1" android:textStyle="bold" android:layout_marginBottom="15dp"/>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilPlace"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Select Place"
+                        app:boxStrokeColor="#00C9B1">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etPlace"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textColor="#EEF2FF"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center"
+                        android:layout_marginVertical="15dp">
+                        <TextView android:id="@+id/star1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="★" android:textSize="30sp" android:textColor="#333333" android:padding="4dp"/>
+                        <TextView android:id="@+id/star2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="★" android:textSize="30sp" android:textColor="#333333" android:padding="4dp"/>
+                        <TextView android:id="@+id/star3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="★" android:textSize="30sp" android:textColor="#333333" android:padding="4dp"/>
+                        <TextView android:id="@+id/star4" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="★" android:textSize="30sp" android:textColor="#333333" android:padding="4dp"/>
+                        <TextView android:id="@+id/star5" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="★" android:textSize="30sp" android:textColor="#333333" android:padding="4dp"/>
+                    </LinearLayout>
+                    <TextView android:id="@+id/tvRatingLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Tap a star to rate" android:gravity="center" android:textColor="#88AAC0CC" android:layout_marginBottom="15dp"/>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Share your experience"
+                        app:boxStrokeColor="#00C9B1">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etReview"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minLines="3"
+                            android:gravity="top"
+                            android:textColor="#EEF2FF"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSubmitReview"
+                        android:layout_width="match_parent"
+                        android:layout_height="54dp"
+                        android:layout_marginTop="15dp"
+                        android:text="Submit Review"
+                        app:cornerRadius="12dp"
+                        app:backgroundTint="#00C9B1"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Filters -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="15dp">
+                <TextView android:id="@+id/filterAll" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="All Reviews" android:paddingHorizontal="16dp" android:paddingVertical="8dp" android:background="@drawable/bg_category_chip_selected" android:textColor="#0A1628" android:layout_marginEnd="10dp"/>
+                <TextView android:id="@+id/filterMine" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="My Reviews" android:paddingHorizontal="16dp" android:paddingVertical="8dp" android:background="@drawable/bg_category_chip" android:textColor="#AAAAAA"/>
+            </LinearLayout>
+
+            <ProgressBar android:id="@+id/progressBar" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:visibility="gone"/>
+            <TextView android:id="@+id/tvEmpty" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="No reviews yet" android:textColor="#88AAC0CC" android:gravity="center" android:padding="20dp" android:visibility="gone"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvReviews"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

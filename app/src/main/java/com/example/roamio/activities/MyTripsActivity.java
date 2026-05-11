@@ -256,6 +256,33 @@ public class MyTripsActivity extends AppCompatActivity {
         card.animate().alpha(1).translationY(0).setDuration(300).setStartDelay(delay).start();
     }
 
-    private String getDestinationEmoji(String dest) { return "✈️"; }
+    private String getDestinationEmoji(String dest) {
+        if (dest == null) return "✈️";
+        String d = dest.toLowerCase();
+        if (d.contains("goa"))            return "🏖️";
+        if (d.contains("kerala"))         return "🛥️";
+        if (d.contains("rajasthan") || d.contains("jaipur")) return "🏰";
+        if (d.contains("manali") || d.contains("shimla"))    return "🏔️";
+        if (d.contains("mumbai"))         return "🌃";
+        if (d.contains("delhi"))          return "🕌";
+        if (d.contains("varanasi"))       return "🕯️";
+        if (d.contains("pondicherry"))    return "🌊";
+        if (d.contains("chennai"))        return "🏖️";
+        if (d.contains("madurai"))        return "🛕";
+        if (d.contains("kumbakonam"))     return "🛕";
+        if (d.contains("mahabalipuram")) return "🏛️";
+        if (d.contains("srirangam"))      return "🛕";
+        if (d.contains("tenkasi"))        return "🌊";
+        if (d.contains("rameswaram"))     return "🛕";
+        if (d.contains("kanyakumari"))    return "🌅";
+        if (d.contains("thanjavur"))      return "🛕";
+        if (d.contains("ooty"))           return "🚂";
+        if (d.contains("kodaikanal"))     return "🌿";
+        if (d.contains("andaman"))        return "🐠";
+        if (d.contains("mysore"))         return "🏯";
+        if (d.contains("hampi"))          return "🏛️";
+        return "✈️";
+    }
+
     private int dp(int val) { return Math.round(val * getResources().getDisplayMetrics().density); }
 }

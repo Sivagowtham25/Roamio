@@ -23,10 +23,6 @@ public class LocationService extends Service {
     private LocationCallback locationCallback;
     private LocationUpdateCallback callback;
 
-    public interface LocationUpdateCallback {
-        void onLocationUpdate(LatLng location);
-    }
-
     public class LocalBinder extends Binder {
         public LocationService getService() {
             return LocationService.this;
@@ -59,7 +55,7 @@ public class LocationService extends Service {
         try {
             fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null);
         } catch (SecurityException e) {
-            e.printStackTrace();
+            android.util.Log.e("LocationService", "Permission error: " + e.getMessage());
         }
     }
 

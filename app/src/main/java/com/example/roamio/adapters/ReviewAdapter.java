@@ -1,6 +1,7 @@
 package com.example.roamio.adapters;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,6 +10,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.roamio.R;
@@ -31,7 +33,6 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ViewHolder
     private final Context       context;
     private final List<Review>  reviews;
 
-    // Rotating avatar colours — teal, gold, muted blue, green
     private static final String[] AVATAR_COLORS = {
             "#00C9B1", "#F4B942", "#7A9BB0", "#2E6B2E", "#E67E22", "#4A7C59"
     };
@@ -53,20 +54,16 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ViewHolder
     public void onBindViewHolder(@NonNull ViewHolder h, int position) {
         Review r = reviews.get(position);
 
-        // Avatar
         h.tvAvatar.setText(r.getInitial());
         String color = AVATAR_COLORS[position % AVATAR_COLORS.length];
-        h.tvAvatar.setBackgroundColor(Color.parseColor(color));
+        ViewCompat.setBackgroundTintList(h.tvAvatar, ColorStateList.valueOf(Color.parseColor(color)));
 
-        // Meta
         h.tvName.setText(r.getUserName() != null ? r.getUserName() : "Anonymous");
         h.tvTime.setText(r.getTimeAgo());
-        h.tvPlace.setText("📍  " + (r.getPlaceName() != null ? r.getPlaceName() : ""));
+        h.tvPlace.setText(String.format("📍 %s", r.getPlaceName() != null ? r.getPlaceName() : ""));
 
-        // Stars
         buildStars(h.llStars, r.getRating());
 
-        // Review text
         h.tvReviewText.setText(r.getReviewText());
 
         h.itemView.setOnLongClickListener(v -> {
@@ -81,9 +78,7 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ViewHolder
         container.removeAllViews();
         for (int i = 1; i <= 5; i++) {
             TextView star = new TextView(context);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, -2);
             lp.setMarginEnd(2);
             star.setLayoutParams(lp);
             star.setTextSize(14f);
@@ -91,7 +86,7 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ViewHolder
                 star.setText("★");
                 star.setTextColor(Color.parseColor("#F4B942"));
             } else if (i - rating < 1 && i - rating > 0) {
-                star.setText("½");    // half-star fallback
+                star.setText("½");
                 star.setTextColor(Color.parseColor("#F4B942"));
             } else {
                 star.setText("★");
@@ -104,7 +99,6 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ViewHolder
     @Override
     public int getItemCount() { return reviews.size(); }
 
-    // ── ViewHolder ─────────────────────────────────────────────────────────────
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView    tvAvatar, tvName, tvTime, tvPlace, tvReviewText;
         LinearLayout llStars;
